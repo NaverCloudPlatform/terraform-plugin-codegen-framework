@@ -30,7 +30,7 @@ func diagOff[V, T interface{}](input func(ctx context.Context, elementType T, el
 	return v
 }
 
-func getAndRefresh(diagnostics diag.Diagnostics, id string, rest ...interface{}) *{{.DtoName | ToPascalCase}}Model {
+func getAndRefresh(diagnostics diag.Diagnostics, plan {{.DtoName | ToPascalCase}}Model, id string, rest ...interface{}) *{{.DtoName | ToPascalCase}}Model {
 	getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
 		return exec.Command("curl", "-s", "-X", "{{.ReadMethod}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+util.ClearDoubleQuote(id){{end}},
 			"-H", "Content-Type: application/json",

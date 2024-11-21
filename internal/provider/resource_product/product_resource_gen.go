@@ -110,11 +110,6 @@ func ProductResourceSchema(ctx context.Context) schema.Schema {
 						MarkdownDescription: "Tenant Id",
 					},
 				},
-				CustomType: ProductType{
-					ObjectType: types.ObjectType{
-						AttrTypes: ProductValue{}.AttributeTypes(ctx),
-					},
-				},
 				Computed: true,
 			},
 			"product_name": schema.StringAttribute{
@@ -224,7 +219,7 @@ func (a *productResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	err = waitResourceCreated(ctx, response["product"].(map[string]interface{})["productId"].(string))
+	err = waitResourceCreated(ctx, response["product"].(map[string]interface{})["productId"].(string), plan)
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
 		return
@@ -232,7 +227,7 @@ func (a *productResource) Create(ctx context.Context, req resource.CreateRequest
 
 	tflog.Info(ctx, "CreateProduct response="+common.MarshalUncheckedString(response))
 
-	plan = *getAndRefresh(resp.Diagnostics, response["product"].(map[string]interface{})["productId"].(string))
+	plan = *getAndRefresh(resp.Diagnostics, plan, response["product"].(map[string]interface{})["productId"].(string))
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -245,7 +240,7 @@ func (a *productResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	plan = *getAndRefresh(resp.Diagnostics, plan.ID.String())
+	plan = *getAndRefresh(resp.Diagnostics, plan, plan.ID.String())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -293,7 +288,7 @@ func (a *productResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	tflog.Info(ctx, "UpdateProduct response="+common.MarshalUncheckedString(response))
 
-	plan = *getAndRefresh(resp.Diagnostics, plan.ID.String())
+	plan = *getAndRefresh(resp.Diagnostics, plan, plan.ID.String())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -323,7 +318,7 @@ func (a *productResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	err = waitResourceDeleted(ctx, util.ClearDoubleQuote(plan.ID.String()))
+	err = waitResourceDeleted(ctx, util.ClearDoubleQuote(plan.ID.String()), plan)
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return
@@ -388,7 +383,7 @@ func diagOff[V, T interface{}](input func(ctx context.Context, elementType T, el
 	return v
 }
 
-func getAndRefresh(diagnostics diag.Diagnostics, id string, rest ...interface{}) *PostproductresponseModel {
+func getAndRefresh(diagnostics diag.Diagnostics, plan PostproductresponseModel, id string, rest ...interface{}) *PostproductresponseModel {
 	getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
 		return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+util.ClearDoubleQuote(id),
 			"-H", "Content-Type: application/json",
@@ -415,7 +410,7 @@ func getAndRefresh(diagnostics diag.Diagnostics, id string, rest ...interface{})
 	return newPlan
 }
 
-func waitResourceCreated(ctx context.Context, id string) error {
+func waitResourceCreated(ctx context.Context, id string, plan PostproductresponseModel) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{"CREATING"},
 		Target:  []string{"CREATED"},
@@ -453,7 +448,7 @@ func waitResourceCreated(ctx context.Context, id string) error {
 	return nil
 }
 
-func waitResourceDeleted(ctx context.Context, id string) error {
+func waitResourceDeleted(ctx context.Context, id string, plan PostproductresponseModel) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{"DELETING"},
 		Target:  []string{"DELETED"},

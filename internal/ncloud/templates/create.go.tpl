@@ -48,7 +48,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 		return
 	}
 
-	err = waitResourceCreated(ctx, {{.IdGetter}})
+	err = waitResourceCreated(ctx, {{.IdGetter}}, plan)
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
 		return
@@ -56,7 +56,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 
 	tflog.Info(ctx, "Create{{.ResourceName | ToPascalCase}} response="+common.MarshalUncheckedString(response))
 
-	plan = *getAndRefresh(resp.Diagnostics, {{.IdGetter}})
+	plan = *getAndRefresh(resp.Diagnostics, plan, {{.IdGetter}})
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }

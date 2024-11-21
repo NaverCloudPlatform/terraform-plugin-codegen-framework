@@ -307,7 +307,7 @@ func (a *resourceResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	err = waitResourceCreated(ctx, response["resource"].(map[string]interface{})["resourceid"].(string))
+	err = waitResourceCreated(ctx, response["resource"].(map[string]interface{})["resourceid"].(string), plan)
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
 		return
@@ -315,7 +315,7 @@ func (a *resourceResource) Create(ctx context.Context, req resource.CreateReques
 
 	tflog.Info(ctx, "CreateResource response="+common.MarshalUncheckedString(response))
 
-	plan = *getAndRefresh(resp.Diagnostics, response["resource"].(map[string]interface{})["resourceid"].(string))
+	plan = *getAndRefresh(resp.Diagnostics, plan, response["resource"].(map[string]interface{})["resourceid"].(string))
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -328,7 +328,7 @@ func (a *resourceResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
-	plan = *getAndRefresh(resp.Diagnostics, plan.ID.String())
+	plan = *getAndRefresh(resp.Diagnostics, plan, plan.ID.String())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -373,7 +373,7 @@ func (a *resourceResource) Update(ctx context.Context, req resource.UpdateReques
 
 	tflog.Info(ctx, "UpdateResource response="+common.MarshalUncheckedString(response))
 
-	plan = *getAndRefresh(resp.Diagnostics, plan.ID.String())
+	plan = *getAndRefresh(resp.Diagnostics, plan, plan.ID.String())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -403,7 +403,7 @@ func (a *resourceResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err = waitResourceDeleted(ctx, util.ClearDoubleQuote(plan.ID.String()))
+	err = waitResourceDeleted(ctx, util.ClearDoubleQuote(plan.ID.String()), plan)
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return
@@ -496,7 +496,7 @@ func diagOff[V, T interface{}](input func(ctx context.Context, elementType T, el
 	return v
 }
 
-func getAndRefresh(diagnostics diag.Diagnostics, id string, rest ...interface{}) *ResourcedtoModel {
+func getAndRefresh(diagnostics diag.Diagnostics, plan ResourcedtoModel, id string, rest ...interface{}) *ResourcedtoModel {
 	getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
 		return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+util.ClearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+util.ClearDoubleQuote(plan.Apiid.String())+"/"+util.ClearDoubleQuote(id),
 			"-H", "Content-Type: application/json",
@@ -523,7 +523,7 @@ func getAndRefresh(diagnostics diag.Diagnostics, id string, rest ...interface{})
 	return newPlan
 }
 
-func waitResourceCreated(ctx context.Context, id string) error {
+func waitResourceCreated(ctx context.Context, id string, plan ResourcedtoModel) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{"CREATING"},
 		Target:  []string{"CREATED"},
@@ -561,7 +561,7 @@ func waitResourceCreated(ctx context.Context, id string) error {
 	return nil
 }
 
-func waitResourceDeleted(ctx context.Context, id string) error {
+func waitResourceDeleted(ctx context.Context, id string, plan ResourcedtoModel) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{"DELETING"},
 		Target:  []string{"DELETED"},

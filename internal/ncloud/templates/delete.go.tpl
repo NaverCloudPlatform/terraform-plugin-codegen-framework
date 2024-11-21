@@ -31,7 +31,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Delete(ctx context.Context, re
 		return
 	}
 
-	err = waitResourceDeleted(ctx, util.ClearDoubleQuote(plan.ID.String()))
+	err = waitResourceDeleted(ctx, util.ClearDoubleQuote(plan.ID.String()), plan)
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return

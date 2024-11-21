@@ -6,7 +6,7 @@
 // Endpoint string
 // ReadPathParams string, optional
 
-func waitResourceCreated(ctx context.Context, id string) error {
+func waitResourceCreated(ctx context.Context, id string, plan {{.DtoName | ToPascalCase}}Model) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{"CREATING"},
 		Target:  []string{"CREATED"},
@@ -44,7 +44,7 @@ func waitResourceCreated(ctx context.Context, id string) error {
 	return nil
 }
 
-func waitResourceDeleted(ctx context.Context, id string) error {
+func waitResourceDeleted(ctx context.Context, id string, plan {{.DtoName | ToPascalCase}}Model) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{"DELETING"},
 		Target:  []string{"DELETED"},
