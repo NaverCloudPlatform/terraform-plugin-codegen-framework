@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
 )
 
 // 필요 데이터들을 초기화 시 계산하고, 각 메서드 별 렌더링을 수행한다.
@@ -281,13 +282,24 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 
 	codeSpec := util.ExtractAttribute(codeSpecPath)
 
+	var dtoName string
+	var id string
+	var attributes resource.Attributes
+	for _, resource := range codeSpec.Resources {
+		if resource.Name == resourceName {
+			dtoName = resource.DtoName
+			id = resource.Id
+			attributes = resource.Schema.Attributes
+		}
+	}
+
 	// Extract needed information
 	APIConfig, _, endpoint, err := util.ExtractConfig(configPath, resourceName)
 	if err != nil {
 		log.Fatalf("error occurred with ExtractConfig: %v", err)
 	}
 
-	refreshLogic, model, err := Gen_ConvertOAStoTFTypes(codeSpec.Resources[0].Schema.Attributes)
+	refreshLogic, model, err := Gen_ConvertOAStoTFTypes(attributes)
 	if err != nil {
 		log.Fatalf("error occurred with Gen_ConvertOAStoTFTypes: %v", err)
 	}
@@ -302,15 +314,6 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 	var updateReqBody string
 	for _, val := range targetResource.Update[0].RequestBody.Required {
 		updateReqBody = updateReqBody + fmt.Sprintf(`"%[1]s": util.ClearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
-	}
-
-	var dtoName string
-	var id string
-	for _, resource := range codeSpec.Resources {
-		if resource.Name == resourceName {
-			dtoName = resource.DtoName
-			id = resource.Id
-		}
 	}
 
 	t.providerName = codeSpec.Provider["name"].(string)
