@@ -11,6 +11,13 @@ import (
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
 )
 
+// 실제 데이터를 생성하기 위하여 config.yml과 code-spec.json에서 데이터를 추출하고, 해당 데이터를 기반으로 리시버 별로 코드를 렌더링합니다.
+// New(): 코드 생성에 필요한 데이터들을 추출합니다. 현재는 config.yml과 code-spec.json에서 데이터를 추출하지만 추후 code-spec.json으로 전부 통일 예정입니다.
+// RenderInitial(): 초기에 필요한 작은 코드 블록들을 생성합니다.
+// RenderCreate(): Create 함수를 생성합니다.
+// RenderRead()): Read 함수를 생성합니다.
+// RenderUpdate(): Update 함수를 생성합니다.
+// RenderDelete(): Delete 함수를 생성합니다.
 // 필요 데이터들을 초기화 시 계산하고, 각 메서드 별 렌더링을 수행한다.
 type Template struct {
 	configPath       string
@@ -74,8 +81,7 @@ func (t *Template) RenderCreate() []byte {
 		CreateMethod     string
 		Endpoint         string
 		CreatePathParams string
-		// TODO - should derive it from yml
-		IdGetter string
+		IdGetter         string
 	}{
 		ResourceName:     t.resourceName,
 		DtoName:          t.dtoName,
@@ -308,12 +314,12 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 
 	var createReqBody string
 	for _, val := range targetResource.Create.RequestBody.Required {
-		createReqBody = createReqBody + fmt.Sprintf(`"%[1]s": util.ClearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
+		createReqBody = createReqBody + fmt.Sprintf(`"%[1]s": clearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
 
 	var updateReqBody string
 	for _, val := range targetResource.Update[0].RequestBody.Required {
-		updateReqBody = updateReqBody + fmt.Sprintf(`"%[1]s": util.ClearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
+		updateReqBody = updateReqBody + fmt.Sprintf(`"%[1]s": clearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
 
 	t.providerName = codeSpec.Provider["name"].(string)
@@ -331,7 +337,7 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 	t.createMethod = APIConfig.Create.Method
 	t.createReqBody = createReqBody
 	t.updateReqBody = updateReqBody
-	t.idGetter = util.MakeIdGetter(id)
+	t.idGetter = makeIdGetter(id)
 
 	return t
 }
@@ -354,7 +360,7 @@ func extractPathParams(path string) string {
 		if start == -1 {
 			s = s + fmt.Sprintf(`"%s"`, val)
 		} else {
-			s = s + fmt.Sprintf(`util.ClearDoubleQuote(plan.%s.String())`, util.PathToPascal(val))
+			s = s + fmt.Sprintf(`clearDoubleQuote(plan.%s.String())`, util.PathToPascal(val))
 		}
 	}
 
@@ -380,9 +386,9 @@ func extractCreatePathParams(path string) string {
 			s = s + fmt.Sprintf(`"%s"`, val)
 		} else {
 			if idx == len(parts)-1 {
-				s = s + `util.ClearDoubleQuote(plan.ID.String())`
+				s = s + `clearDoubleQuote(plan.ID.String())`
 			} else {
-				s = s + fmt.Sprintf(`util.ClearDoubleQuote(plan.%s.String())`, util.PathToPascal(val))
+				s = s + fmt.Sprintf(`clearDoubleQuote(plan.%s.String())`, util.PathToPascal(val))
 			}
 		}
 	}
@@ -411,8 +417,24 @@ func extractReadPathParams(path string) string {
 		if start == -1 {
 			s = s + fmt.Sprintf(`"%s"`, val)
 		} else {
-			s = s + fmt.Sprintf(`util.ClearDoubleQuote(plan.%s.String())`, util.PathToPascal(val))
+			s = s + fmt.Sprintf(`clearDoubleQuote(plan.%s.String())`, util.PathToPascal(val))
 		}
+	}
+
+	return s
+}
+
+func makeIdGetter(target string) string {
+	s := "response"
+	parts := strings.Split(target, ".")
+
+	for idx, val := range parts {
+		if idx == len(parts)-1 {
+			s = s + fmt.Sprintf(`["%s"].(string)`, util.ToCamelCase(val))
+			continue
+		}
+
+		s = s + fmt.Sprintf(`["%s"].(map[string]interface{})`, util.ToCamelCase(val))
 	}
 
 	return s
