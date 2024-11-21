@@ -34,6 +34,21 @@ resources:
     delete:
       path: /api-keys/{api-key-id}
       method: DELETE
+  resource:
+    dto_name: ResourceDto
+    id: resource.resourceId
+    create:
+      path: /products/{product-id}/apis/{api-id}/resources
+      method: POST
+    read:
+      path: /products/{product-id}/apis/{api-id}/resources
+      method: GET
+    update:
+      - path: /products/{product-id}/apis/{api-id}/resources/{resource-id}
+        method: PATCH
+    delete:
+      path: /products/{product-id}/apis/{api-id}/resources/{resource-id}
+      method: DELETE
     # schema:
     #   attributes:
     #     overrides:
