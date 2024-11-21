@@ -2,27 +2,26 @@ package resource_product
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"strings"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"os"
 	"os/exec"
+	"strings"
 	"time"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/common"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/conn"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 func ProductResourceSchema(ctx context.Context) schema.Schema {
@@ -193,9 +192,8 @@ func (a *productResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	reqBody, err := json.Marshal(map[string]string{
-		"productName": util.ClearDoubleQuote(plan.ProductName.String()),
-"subscriptionCode": util.ClearDoubleQuote(plan.SubscriptionCode.String()),
-
+		"productName":      util.ClearDoubleQuote(plan.ProductName.String()),
+		"subscriptionCode": util.ClearDoubleQuote(plan.SubscriptionCode.String()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
@@ -261,9 +259,8 @@ func (a *productResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	reqBody, err := json.Marshal(map[string]string{
-		"productName": util.ClearDoubleQuote(plan.ProductName.String()),
-"subscriptionCode": util.ClearDoubleQuote(plan.SubscriptionCode.String()),
-
+		"productName":      util.ClearDoubleQuote(plan.ProductName.String()),
+		"subscriptionCode": util.ClearDoubleQuote(plan.SubscriptionCode.String()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
@@ -334,20 +331,12 @@ func (a *productResource) Delete(ctx context.Context, req resource.DeleteRequest
 }
 
 type PostproductresponseModel struct {
-    ID types.String `tfsdk:"id"`
-    ApiKeyDescription         types.String `tfsdk:"api_key_description"`
-ApiKeyName         types.String `tfsdk:"api_key_name"`
-Api_key         types.Object `tfsdk:"api_key"`
-ApiKeyId         types.String `tfsdk:"api_key_id"`
-DomainCode         types.String `tfsdk:"domain_code"`
-IsEnabled         types.Bool `tfsdk:"is_enabled"`
-ModTime         types.String `tfsdk:"mod_time"`
-Modifier         types.String `tfsdk:"modifier"`
-PrimaryKey         types.String `tfsdk:"primary_key"`
-SecondaryKey         types.String `tfsdk:"secondary_key"`
-TenantId         types.String `tfsdk:"tenant_id"`
-Apikeyid         types.String `tfsdk:"apikeyid"`
-
+	ID               types.String `tfsdk:"id"`
+	Description      types.String `tfsdk:"description"`
+	ProductName      types.String `tfsdk:"product_name"`
+	SubscriptionCode types.String `tfsdk:"subscription_code"`
+	Product          types.Object `tfsdk:"product"`
+	Productid        types.String `tfsdk:"productid"`
 }
 
 func ConvertToFrameworkTypes(data map[string]interface{}, id string, rest []interface{}) (*PostproductresponseModel, error) {
@@ -355,38 +344,33 @@ func ConvertToFrameworkTypes(data map[string]interface{}, id string, rest []inte
 
 	dto.ID = types.StringValue(id)
 
-    dto.ApiKeyDescription = types.StringValue(data["api_key_description"].(string))
-dto.ApiKeyName = types.StringValue(data["api_key_name"].(string))
+	dto.Description = types.StringValue(data["description"].(string))
+	dto.ProductName = types.StringValue(data["product_name"].(string))
+	dto.SubscriptionCode = types.StringValue(data["subscription_code"].(string))
 
-			tempApi_key := data["api_key"].(map[string]interface{})
-			convertedTempApi_key, err := util.ConvertMapToObject(context.TODO(), tempApi_key)
-			if err != nil {
-				fmt.Println("ConvertMapToObject Error")
-			}
+	tempProduct := data["product"].(map[string]interface{})
+	convertedTempProduct, err := util.ConvertMapToObject(context.TODO(), tempProduct)
+	if err != nil {
+		fmt.Println("ConvertMapToObject Error")
+	}
 
-			dto.Api_key = diagOff(types.ObjectValueFrom, context.TODO(), types.ObjectType{AttrTypes: map[string]attr.Type{
-				"api_key_description": types.StringType,
-"api_key_id": types.StringType,
-"api_key_name": types.StringType,
-"domain_code": types.StringType,
-"is_enabled": types.BoolType,
-"mod_time": types.StringType,
-"modifier": types.StringType,
-"primary_key": types.StringType,
-"secondary_key": types.StringType,
-"tenant_id": types.StringType,
-
-			}}.AttributeTypes(), convertedTempApi_key)
-dto.ApiKeyId = types.StringValue(data["api_key_id"].(string))
-dto.DomainCode = types.StringValue(data["domain_code"].(string))
-dto.IsEnabled = types.BoolValue(data["is_enabled"].(bool))
-dto.ModTime = types.StringValue(data["mod_time"].(string))
-dto.Modifier = types.StringValue(data["modifier"].(string))
-dto.PrimaryKey = types.StringValue(data["primary_key"].(string))
-dto.SecondaryKey = types.StringValue(data["secondary_key"].(string))
-dto.TenantId = types.StringValue(data["tenant_id"].(string))
-dto.Apikeyid = types.StringValue(data["apikeyid"].(string))
-
+	dto.Product = diagOff(types.ObjectValueFrom, context.TODO(), types.ObjectType{AttrTypes: map[string]attr.Type{
+		"action_name":         types.StringType,
+		"disabled":            types.BoolType,
+		"domain_code":         types.StringType,
+		"invoke_id":           types.StringType,
+		"is_deleted":          types.BoolType,
+		"is_published":        types.BoolType,
+		"mod_time":            types.StringType,
+		"modifier":            types.StringType,
+		"permission":          types.StringType,
+		"product_description": types.StringType,
+		"product_id":          types.StringType,
+		"product_name":        types.StringType,
+		"subscription_code":   types.StringType,
+		"tenant_id":           types.StringType,
+	}}.AttributeTypes(), convertedTempProduct)
+	dto.Productid = types.StringValue(data["productid"].(string))
 
 	return &dto, nil
 }
@@ -437,7 +421,7 @@ func waitResourceCreated(ctx context.Context, id string) error {
 		Target:  []string{"CREATED"},
 		Refresh: func() (interface{}, string, error) {
 			getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-			return exec.Command("curl", "-s", "-X", "GET",  "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+util.ClearDoubleQuote(id),
+				return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+util.ClearDoubleQuote(id),
 					"-H", "accept: application/json;charset=UTF-8",
 					"-H", "Content-Type: application/json",
 					"-H", "x-ncp-apigw-timestamp: "+timestamp,
@@ -448,7 +432,7 @@ func waitResourceCreated(ctx context.Context, id string) error {
 				)
 			}
 
-			response, err := util.Request(getExecFunc, "GET","/api/v1"+"/"+"products"+"/"+util.ClearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+			response, err := util.Request(getExecFunc, "GET", "/api/v1"+"/"+"products"+"/"+util.ClearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
 			if err != nil {
 				return response, "CREATING", nil
 			}
@@ -475,7 +459,7 @@ func waitResourceDeleted(ctx context.Context, id string) error {
 		Target:  []string{"DELETED"},
 		Refresh: func() (interface{}, string, error) {
 			getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-			return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+util.ClearDoubleQuote(id),
+				return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+util.ClearDoubleQuote(id),
 					"-H", "accept: application/json;charset=UTF-8",
 					"-H", "Content-Type: application/json",
 					"-H", "x-ncp-apigw-timestamp: "+timestamp,
@@ -503,4 +487,3 @@ func waitResourceDeleted(ctx context.Context, id string) error {
 	}
 	return nil
 }
-
