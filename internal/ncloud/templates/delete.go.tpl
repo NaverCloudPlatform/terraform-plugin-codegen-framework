@@ -25,13 +25,13 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Delete(ctx context.Context, re
 		)
 	}
 
-	_, err := util.Request(execFunc, "{{.DeleteMethod}}", "{{.Endpoint | ExtractPath}}"{{.DeletePathParams}}, os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+	_, err := request(execFunc, "{{.DeleteMethod}}", "{{.Endpoint | ExtractPath}}"{{.DeletePathParams}}, os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return
 	}
 
-	err = waitResourceDeleted(ctx, util.ClearDoubleQuote(plan.ID.String()), plan)
+	err = waitResourceDeleted(ctx, clearDoubleQuote(plan.ID.String()), plan)
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return

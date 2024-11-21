@@ -42,7 +42,7 @@ func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
 		} else if val.SingleNested != nil {
 			s = s + fmt.Sprintf(`
 			temp%[1]s := data["%[2]s"].(map[string]interface{})
-			convertedTemp%[1]s, err := util.ConvertMapToObject(context.TODO(), temp%[1]s)
+			convertedTemp%[1]s, err := convertMapToObject(context.TODO(), temp%[1]s)
 			if err != nil {
 				fmt.Println("ConvertMapToObject Error")
 			}

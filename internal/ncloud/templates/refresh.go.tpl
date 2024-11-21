@@ -32,7 +32,7 @@ func diagOff[V, T interface{}](input func(ctx context.Context, elementType T, el
 
 func getAndRefresh(diagnostics diag.Diagnostics, plan {{.DtoName | ToPascalCase}}Model, id string, rest ...interface{}) *{{.DtoName | ToPascalCase}}Model {
 	getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "{{.ReadMethod}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+util.ClearDoubleQuote(id){{end}},
+		return exec.Command("curl", "-s", "-X", "{{.ReadMethod}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}},
 			"-H", "Content-Type: application/json",
 			"-H", "x-ncp-apigw-timestamp: "+timestamp,
 			"-H", "x-ncp-iam-access-key: "+accessKey,
@@ -42,13 +42,13 @@ func getAndRefresh(diagnostics diag.Diagnostics, plan {{.DtoName | ToPascalCase}
 		)
 	}
 
-	response, _ := util.Request(getExecFunc, "{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+util.ClearDoubleQuote(id){{end}}, os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+	response, _ := request(getExecFunc, "{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
 	if response == nil {
 		diagnostics.AddError("UPDATING ERROR", "response invalid")
 		return nil
 	}
 
-	newPlan, err := ConvertToFrameworkTypes(util.ConvertKeys(response).(map[string]interface{}), id, rest)
+	newPlan, err := ConvertToFrameworkTypes(convertKeys(response).(map[string]interface{}), id, rest)
 	if err != nil {
 		diagnostics.AddError("CREATING ERROR", err.Error())
 		return nil
@@ -56,5 +56,158 @@ func getAndRefresh(diagnostics diag.Diagnostics, plan {{.DtoName | ToPascalCase}
 
 	return newPlan
 }
+
+// convertKeys recursively converts all keys in a map from camelCase to snake_case
+func convertKeys(input interface{}) interface{} {
+	switch v := input.(type) {
+	case map[string]interface{}:
+		newMap := make(map[string]interface{})
+		for key, value := range v {
+			// Convert the key to snake_case
+			newKey := camelToSnake(key)
+			// Recursively convert nested values
+			newMap[newKey] = convertKeys(value)
+		}
+		return newMap
+	case []interface{}:
+		newSlice := make([]interface{}, len(v))
+		for i, value := range v {
+			newSlice[i] = convertKeys(value)
+		}
+		return newSlice
+	default:
+		return v
+	}
+}
+
+// Convert nested map structured json into terraform object
+func convertMapToObject(ctx context.Context, data map[string]interface{}) (types.Object, error) {
+	attrTypes := make(map[string]attr.Type)
+	attrValues := make(map[string]attr.Value)
+
+	for key, value := range data {
+		attrType, attrValue, err := convertInterfaceToAttr(ctx, value)
+		if err != nil {
+			return types.Object{}, fmt.Errorf("error converting field %s: %v", key, err)
+		}
+
+		attrTypes[key] = attrType
+		attrValues[key] = attrValue
+	}
+
+	r, _ := types.ObjectValue(attrTypes, attrValues)
+
+	return r, nil
+}
+
+func camelToSnake(s string) string {
+	var result strings.Builder
+	for i, r := range s {
+		if i > 0 && unicode.IsUpper(r) {
+			result.WriteRune('_')
+		}
+		result.WriteRune(unicode.ToLower(r))
+	}
+	return result.String()
+}
+
+// Convert interface{} into attr.Type attr.Value
+func convertInterfaceToAttr(ctx context.Context, value interface{}) (attr.Type, attr.Value, error) {
+	switch v := value.(type) {
+	case string:
+		return types.StringType, types.StringValue(v), nil
+	case float64:
+		return types.Int64Type, types.Int64Value(int64(v)), nil
+	case bool:
+		return types.BoolType, types.BoolValue(v), nil
+	case []interface{}:
+		if len(v) == 0 {
+			// Treat as array list in case of empty
+			return types.ListType{ElemType: types.StringType},
+				types.ListValueMust(types.StringType, []attr.Value{}),
+				nil
+		}
+		// Determine type based on first element
+		elemType, _, err := convertInterfaceToAttr(ctx, v[0])
+		if err != nil {
+			return nil, nil, err
+		}
+
+		values := make([]attr.Value, len(v))
+		for i, item := range v {
+			_, value, err := convertInterfaceToAttr(ctx, item)
+			if err != nil {
+				return nil, nil, err
+			}
+			values[i] = value
+		}
+
+		listType := types.ListType{ElemType: elemType}
+		listValue, diags := types.ListValue(elemType, values)
+		if diags.HasError() {
+			return nil, nil, err
+		}
+
+		return listType, listValue, nil
+
+	case map[string]interface{}:
+		objValue, err := convertMapToObject(ctx, v)
+		if err != nil {
+			return nil, nil, err
+		}
+		return objValue.Type(ctx), objValue, nil
+	case nil:
+		return types.StringType, types.StringNull(), nil
+	default:
+		return nil, nil, fmt.Errorf("unsupported type: %T", value)
+	}
+}
+
+// For curl request
+func makeSignature(method, url, timestamp, accessKey, secretKey string) string {
+	message := fmt.Sprintf("%s %s\n%s\n%s",
+		method,
+		url,
+		timestamp,
+		accessKey,
+	)
+
+	h := hmac.New(sha256.New, []byte(secretKey))
+	h.Write([]byte(message))
+
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+}
+
+
+
+func request(command func(timestamp, accessKey, signature string) *exec.Cmd, method, url, accessKey, secretKey, requestBody string) (map[string]interface{}, error) {
+	timestamp := fmt.Sprintf("%d", time.Now().UnixMilli())
+	signature := makeSignature(method, url, timestamp, accessKey, secretKey)
+
+	cmd := command(timestamp, accessKey, signature)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, err
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(output, &result); err != nil {
+		return nil, err
+	}
+
+	// code 200 but error occurs
+	if result["error"] != nil {
+		return result, fmt.Errorf("error with code 200: %s", result["error"])
+	}
+
+	return result, nil
+}
+
+func clearDoubleQuote(s string) string {
+	return strings.Replace(strings.Replace(strings.Replace(s, "\\", "", -1), "\"", "", -1), `"`, "", -1)
+}
+
+
 
 {{ end }}

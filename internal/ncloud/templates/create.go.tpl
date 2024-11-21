@@ -38,7 +38,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 		)
 	}
 
-	response, err := util.Request(execFunc, "{{.CreateMethod}}", "{{.Endpoint | ExtractPath}}"{{.CreatePathParams}}, os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := request(execFunc, "{{.CreateMethod}}", "{{.Endpoint | ExtractPath}}"{{.CreatePathParams}}, os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), strings.Replace(string(reqBody), `\"`, "", -1))
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
 		return
