@@ -37,7 +37,7 @@ func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
 			temp%[1]s := data["%[2]s"].([]interface{})
 			dto.%[1]s = diagOff(types.ListValueFrom, context.TODO(), types.ListType{ElemType:
 				%[3]s
-			}.ElementType(), temp%[1]s)`, CamelToPascalCase(n), PascalToSnakeCase(n), GenArray(val.ListNested.NestedObject.Attributes, n)) + "\n"
+			}}.ElementType(), temp%[1]s)`, CamelToPascalCase(n), PascalToSnakeCase(n), GenArray(val.ListNested.NestedObject.Attributes, n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.List `tfsdk:\"%[2]s\"`", CamelToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		} else if val.SingleNested != nil {
 			s = s + fmt.Sprintf(`
@@ -131,7 +131,7 @@ func GenObject(d resource.Attributes, pName string) string {
 			s = s + fmt.Sprintf(`
 			"%[1]s": types.ListType{ElemType:
 				%[2]s
-			},`, n, GenArray(val.ListNested.NestedObject.Attributes, n)) + "\n"
+			}},`, n, GenArray(val.ListNested.NestedObject.Attributes, n)) + "\n"
 		} else if val.SingleNested != nil {
 			s = s + fmt.Sprintf(`
 			"%[1]s": types.ObjectType{AttrTypes: map[string]attr.Type{
