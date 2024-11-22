@@ -11,14 +11,14 @@ import (
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
 )
 
-// 실제 데이터를 생성하기 위하여 config.yml과 code-spec.json에서 데이터를 추출하고, 해당 데이터를 기반으로 리시버 별로 코드를 렌더링합니다.
-// New(): 코드 생성에 필요한 데이터들을 추출합니다. 현재는 config.yml과 code-spec.json에서 데이터를 추출하지만 추후 code-spec.json으로 전부 통일 예정입니다.
-// RenderInitial(): 초기에 필요한 작은 코드 블록들을 생성합니다.
-// RenderCreate(): Create 함수를 생성합니다.
-// RenderRead()): Read 함수를 생성합니다.
-// RenderUpdate(): Update 함수를 생성합니다.
-// RenderDelete(): Delete 함수를 생성합니다.
-// 필요 데이터들을 초기화 시 계산하고, 각 메서드 별 렌더링을 수행한다.
+// 실제 데이터를 생성하기 위하여 config.yml과 code-spec.json에서 데이터를 추출하고, 해당 데이터를 기반으로 리시버 별로 코드를 렌더링.
+// New(): 코드 생성에 필요한 데이터들을 추출합니다. 현재는 config.yml과 code-spec.json에서 데이터를 추출하지만 추후 code-spec.json으로 전부 통일 예정.
+// RenderInitial(): 초기에 필요한 작은 코드 블록들을 생성한다.
+// RenderCreate(): Create 함수를 생성한다.
+// RenderRead()): Read 함수를 생성한다.
+// RenderUpdate(): Update 함수를 생성한다.
+// RenderDelete(): Delete 함수를 생성한다.
+// 필요 데이터들을 초기화 시 계산하고, 각 메서드 별 렌더링을 수행한다..
 type Template struct {
 	configPath       string
 	codeSpecPath     string
@@ -276,6 +276,12 @@ func (t *Template) RenderWait() []byte {
 
 // 초기화를 통해 필요한 데이터들을 미리 계산한다.
 func New(configPath, codeSpecPath, resourceName string) *Template {
+	var dtoName string
+	var id string
+	var attributes resource.Attributes
+	var createReqBody string
+	var updateReqBody string
+
 	t := &Template{
 		configPath:   configPath,
 		codeSpecPath: codeSpecPath,
@@ -288,9 +294,6 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 
 	codeSpec := util.ExtractAttribute(codeSpecPath)
 
-	var dtoName string
-	var id string
-	var attributes resource.Attributes
 	for _, resource := range codeSpec.Resources {
 		if resource.Name == resourceName {
 			dtoName = resource.DtoName
@@ -312,12 +315,10 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 
 	targetResource := util.ExtractRequest(codeSpecPath, resourceName)
 
-	var createReqBody string
 	for _, val := range targetResource.Create.RequestBody.Required {
 		createReqBody = createReqBody + fmt.Sprintf(`"%[1]s": clearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
 
-	var updateReqBody string
 	for _, val := range targetResource.Update[0].RequestBody.Required {
 		updateReqBody = updateReqBody + fmt.Sprintf(`"%[1]s": clearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
