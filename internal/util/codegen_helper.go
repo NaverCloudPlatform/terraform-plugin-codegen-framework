@@ -1,12 +1,17 @@
 package util
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -166,4 +171,38 @@ func MakeIdGetter(target string) string {
 
 func ClearDoubleQuote(s string) string {
 	return strings.Replace(strings.Replace(strings.Replace(s, "\\", "", -1), "\"", "", -1), `"`, "", -1)
+}
+
+func MakeReqeust(method, endpoint, path, reqBody string) (map[string]interface{}, error) {
+	access_key := os.Getenv("NCLOUD_ACCESS_KEY")
+	secret_key := os.Getenv("NCLOUD_SECRET_KEY")
+	timestamp := fmt.Sprintf("%d", time.Now().UnixMilli())
+	signature := makeSignature(method, ExtractPath(endpoint), timestamp, access_key, secret_key)
+	b := bytes.NewBuffer([]byte(reqBody))
+
+	req, err := http.NewRequest(method, endpoint+path, b)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("x-ncp-apigw-timestamp", timestamp)
+	req.Header.Add("x-ncp-iam-access-key", access_key)
+	req.Header.Add("x-ncp-apigw-signature-v2", signature)
+	req.Header.Add("cache-control", "no-cache")
+	req.Header.Add("pragma", "no-cache")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var respBody map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+		return nil, err
+	}
+
+	return respBody, nil
 }

@@ -11,19 +11,7 @@ func waitResourceCreated(ctx context.Context, id string, plan {{.DtoName | ToPas
 		Pending: []string{"CREATING"},
 		Target:  []string{"CREATED"},
 		Refresh: func() (interface{}, string, error) {
-			getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-			return exec.Command("curl", "-s", "-X", "{{.ReadMethod}}",  "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}},
-					"-H", "accept: application/json;charset=UTF-8",
-					"-H", "Content-Type: application/json",
-					"-H", "x-ncp-apigw-timestamp: "+timestamp,
-					"-H", "x-ncp-iam-access-key: "+accessKey,
-					"-H", "x-ncp-apigw-signature-v2: "+signature,
-					"-H", "cache-control: no-cache",
-					"-H", "pragma: no-cache",
-				)
-			}
-
-			response, err := request(getExecFunc, "{{.ReadMethod}}","{{.Endpoint | ExtractPath}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+			response, err := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
 			if err != nil {
 				return response, "CREATING", nil
 			}
@@ -49,19 +37,7 @@ func waitResourceDeleted(ctx context.Context, id string, plan {{.DtoName | ToPas
 		Pending: []string{"DELETING"},
 		Target:  []string{"DELETED"},
 		Refresh: func() (interface{}, string, error) {
-			getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-			return exec.Command("curl", "-s", "-X", "{{.ReadMethod}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}},
-					"-H", "accept: application/json;charset=UTF-8",
-					"-H", "Content-Type: application/json",
-					"-H", "x-ncp-apigw-timestamp: "+timestamp,
-					"-H", "x-ncp-iam-access-key: "+accessKey,
-					"-H", "x-ncp-apigw-signature-v2: "+signature,
-					"-H", "cache-control: no-cache",
-					"-H", "pragma: no-cache",
-				)
-			}
-
-			response, _ := request(getExecFunc, "{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+			response, _ := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
 			if response["error"] != nil {
 				return response, "DELETED", nil
 			}

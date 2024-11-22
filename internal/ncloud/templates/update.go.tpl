@@ -26,19 +26,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, re
 
 	tflog.Info(ctx, "Update{{.ResourceName | ToPascalCase}} reqParams="+strings.Replace(string(reqBody), `\"`, "", -1))
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "{{.UpdateMethod}}", "{{.Endpoint}}"{{if .UpdatePathParams}}{{.UpdatePathParams}}{{end}},
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-			"-d", strings.Replace(string(reqBody), `\"`, "", -1),
-		)
-	}
-
-	response, err := request(execFunc, "{{.UpdateMethod}}", "{{.Endpoint | ExtractPath}}"{{if .UpdatePathParams}}{{.UpdatePathParams}}{{end}}, os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := util.MakeReqeust("{{.UpdateMethod}}",  "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .UpdatePathParams}}{{.UpdatePathParams}}{{end}}, strings.Replace(string(reqBody), `\"`, "", -1))
 	if err != nil {
 		resp.Diagnostics.AddError("UPDATING ERROR", err.Error())
 		return

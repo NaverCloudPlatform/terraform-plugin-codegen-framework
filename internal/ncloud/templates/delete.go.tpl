@@ -14,18 +14,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Delete(ctx context.Context, re
 		return
 	}
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "{{.DeleteMethod}}", "{{.Endpoint}}"{{.DeletePathParams}},
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-		)
-	}
-
-	_, err := request(execFunc, "{{.DeleteMethod}}", "{{.Endpoint | ExtractPath}}"{{.DeletePathParams}}, os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+	_, err := util.MakeReqeust("{{.DeleteMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{.DeletePathParams}}, "")
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return

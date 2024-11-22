@@ -2,19 +2,15 @@ package resource_resource
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 	"time"
 	"unicode"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/common"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/conn"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -37,6 +33,12 @@ func ResourceResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "api-id",
 				MarkdownDescription: "api-id",
+			},
+			"resource-id": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "resource-id",
+				MarkdownDescription: "resource-id",
 			},
 			"cors_allow_credentials": schema.StringAttribute{
 				Optional:            true,
@@ -288,19 +290,7 @@ func (a *resourceResource) Create(ctx context.Context, req resource.CreateReques
 
 	tflog.Info(ctx, "CreateResource reqParams="+strings.Replace(string(reqBody), `\"`, "", -1))
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "POST", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+"resources",
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-			"-d", strings.Replace(string(reqBody), `\"`, "", -1),
-		)
-	}
-
-	response, err := request(execFunc, "POST", "/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+"resources", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := util.MakeReqeust("POST", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+"resources", strings.Replace(string(reqBody), `\"`, "", -1))
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
 		return
@@ -352,19 +342,7 @@ func (a *resourceResource) Update(ctx context.Context, req resource.UpdateReques
 
 	tflog.Info(ctx, "UpdateResource reqParams="+strings.Replace(string(reqBody), `\"`, "", -1))
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "PATCH", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+"resources"+"/"+clearDoubleQuote(plan.Resourceid.String()),
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-			"-d", strings.Replace(string(reqBody), `\"`, "", -1),
-		)
-	}
-
-	response, err := request(execFunc, "PATCH", "/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+"resources"+"/"+clearDoubleQuote(plan.Resourceid.String()), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := util.MakeReqeust("PATCH", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+"resources"+"/"+clearDoubleQuote(plan.Resourceid.String()), strings.Replace(string(reqBody), `\"`, "", -1))
 	if err != nil {
 		resp.Diagnostics.AddError("UPDATING ERROR", err.Error())
 		return
@@ -389,18 +367,7 @@ func (a *resourceResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "DELETE", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+"resources"+"/"+clearDoubleQuote(plan.Resourceid.String()),
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-		)
-	}
-
-	_, err := request(execFunc, "DELETE", "/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+"resources"+"/"+clearDoubleQuote(plan.Resourceid.String()), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+	_, err := util.MakeReqeust("DELETE", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+"resources"+"/"+clearDoubleQuote(plan.Resourceid.String()), "")
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return
@@ -426,6 +393,7 @@ type ResourcedtoModel struct {
 	Resource_list        types.List   `tfsdk:"resource_list"`
 	Productid            types.String `tfsdk:"productid"`
 	Apiid                types.String `tfsdk:"apiid"`
+	Resourceid           types.String `tfsdk:"resourceid"`
 }
 
 func ConvertToFrameworkTypes(data map[string]interface{}, id string, rest []interface{}) (*ResourcedtoModel, error) {
@@ -500,18 +468,7 @@ func diagOff[V, T interface{}](input func(ctx context.Context, elementType T, el
 }
 
 func getAndRefresh(diagnostics diag.Diagnostics, plan ResourcedtoModel, id string, rest ...interface{}) *ResourcedtoModel {
-	getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+clearDoubleQuote(id),
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-		)
-	}
-
-	response, _ := request(getExecFunc, "GET", "/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+clearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+	response, err := util.MakeReqeust("GET", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+clearDoubleQuote(id), "")
 	if response == nil {
 		diagnostics.AddError("UPDATING ERROR", "response invalid")
 		return nil
@@ -629,44 +586,6 @@ func convertInterfaceToAttr(ctx context.Context, value interface{}) (attr.Type, 
 	}
 }
 
-func makeSignature(method, url, timestamp, accessKey, secretKey string) string {
-	message := fmt.Sprintf("%s %s\n%s\n%s",
-		method,
-		url,
-		timestamp,
-		accessKey,
-	)
-
-	h := hmac.New(sha256.New, []byte(secretKey))
-	h.Write([]byte(message))
-
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
-}
-
-func request(command func(timestamp, accessKey, signature string) *exec.Cmd, method, url, accessKey, secretKey, requestBody string) (map[string]interface{}, error) {
-	timestamp := fmt.Sprintf("%d", time.Now().UnixMilli())
-	signature := makeSignature(method, url, timestamp, accessKey, secretKey)
-
-	cmd := command(timestamp, accessKey, signature)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, err
-	}
-
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
-		return nil, err
-	}
-
-	// code 200 but error occurs
-	if result["error"] != nil {
-		return result, fmt.Errorf("error with code 200: %s", result["error"])
-	}
-
-	return result, nil
-}
-
 func clearDoubleQuote(s string) string {
 	return strings.Replace(strings.Replace(strings.Replace(s, "\\", "", -1), "\"", "", -1), `"`, "", -1)
 }
@@ -676,19 +595,7 @@ func waitResourceCreated(ctx context.Context, id string, plan ResourcedtoModel) 
 		Pending: []string{"CREATING"},
 		Target:  []string{"CREATED"},
 		Refresh: func() (interface{}, string, error) {
-			getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-				return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+clearDoubleQuote(id),
-					"-H", "accept: application/json;charset=UTF-8",
-					"-H", "Content-Type: application/json",
-					"-H", "x-ncp-apigw-timestamp: "+timestamp,
-					"-H", "x-ncp-iam-access-key: "+accessKey,
-					"-H", "x-ncp-apigw-signature-v2: "+signature,
-					"-H", "cache-control: no-cache",
-					"-H", "pragma: no-cache",
-				)
-			}
-
-			response, err := request(getExecFunc, "GET", "/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+clearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+			response, err := util.MakeReqeust("GET", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+clearDoubleQuote(id), "")
 			if err != nil {
 				return response, "CREATING", nil
 			}
@@ -714,19 +621,7 @@ func waitResourceDeleted(ctx context.Context, id string, plan ResourcedtoModel) 
 		Pending: []string{"DELETING"},
 		Target:  []string{"DELETED"},
 		Refresh: func() (interface{}, string, error) {
-			getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-				return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+clearDoubleQuote(id),
-					"-H", "accept: application/json;charset=UTF-8",
-					"-H", "Content-Type: application/json",
-					"-H", "x-ncp-apigw-timestamp: "+timestamp,
-					"-H", "x-ncp-iam-access-key: "+accessKey,
-					"-H", "x-ncp-apigw-signature-v2: "+signature,
-					"-H", "cache-control: no-cache",
-					"-H", "pragma: no-cache",
-				)
-			}
-
-			response, _ := request(getExecFunc, "GET", "/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+clearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+			response, _ := util.MakeReqeust("GET", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String())+"/"+"apis"+"/"+clearDoubleQuote(plan.Apiid.String())+"/"+clearDoubleQuote(id), "")
 			if response["error"] != nil {
 				return response, "DELETED", nil
 			}

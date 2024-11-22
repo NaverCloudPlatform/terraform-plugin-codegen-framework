@@ -2,25 +2,23 @@ package resource_api_keys
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"strings"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"os/exec"
 	"time"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"unicode"
+
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/common"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/conn"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 func ApiKeysResourceSchema(ctx context.Context) schema.Schema {
@@ -81,11 +79,6 @@ func ApiKeysResourceSchema(ctx context.Context) schema.Schema {
 						Computed:            true,
 						Description:         "Tenant Id",
 						MarkdownDescription: "Tenant Id",
-					},
-				},
-				CustomType: ApiKeyType{
-					ObjectType: types.ObjectType{
-						AttrTypes: ApiKeyValue{}.AttributeTypes(ctx),
 					},
 				},
 				Computed: true,
@@ -200,7 +193,6 @@ func (a *apiKeysResource) Create(ctx context.Context, req resource.CreateRequest
 
 	reqBody, err := json.Marshal(map[string]string{
 		"apiKeyName": clearDoubleQuote(plan.ApiKeyName.String()),
-
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
@@ -209,19 +201,7 @@ func (a *apiKeysResource) Create(ctx context.Context, req resource.CreateRequest
 
 	tflog.Info(ctx, "CreateApiKeys reqParams="+strings.Replace(string(reqBody), `\"`, "", -1))
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "POST", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys",
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-			"-d", strings.Replace(string(reqBody), `\"`, "", -1),
-		)
-	}
-
-	response, err := request(execFunc, "POST", "/api/v1"+"/"+"api-keys", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := util.MakeReqeust("POST", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys", strings.Replace(string(reqBody), `\"`, "", -1))
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
 		return
@@ -267,8 +247,7 @@ func (a *apiKeysResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	reqBody, err := json.Marshal(map[string]string{
 		"apiKeyName": clearDoubleQuote(plan.ApiKeyName.String()),
-"isEnabled": clearDoubleQuote(plan.IsEnabled.String()),
-
+		"isEnabled":  clearDoubleQuote(plan.IsEnabled.String()),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
@@ -277,19 +256,7 @@ func (a *apiKeysResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	tflog.Info(ctx, "UpdateApiKeys reqParams="+strings.Replace(string(reqBody), `\"`, "", -1))
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "PUT", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(plan.Apikeyid.String()),
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-			"-d", strings.Replace(string(reqBody), `\"`, "", -1),
-		)
-	}
-
-	response, err := request(execFunc, "PUT", "/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(plan.Apikeyid.String()), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := util.MakeReqeust("PUT", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(plan.Apikeyid.String()), strings.Replace(string(reqBody), `\"`, "", -1))
 	if err != nil {
 		resp.Diagnostics.AddError("UPDATING ERROR", err.Error())
 		return
@@ -314,18 +281,7 @@ func (a *apiKeysResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "DELETE", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(plan.Apikeyid.String()),
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-		)
-	}
-
-	_, err := request(execFunc, "DELETE", "/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(plan.Apikeyid.String()), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+	_, err := util.MakeReqeust("DELETE", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(plan.Apikeyid.String()), "")
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return
@@ -339,20 +295,19 @@ func (a *apiKeysResource) Delete(ctx context.Context, req resource.DeleteRequest
 }
 
 type ApikeydtoModel struct {
-    ID types.String `tfsdk:"id"`
-    ApiKeyDescription         types.String `tfsdk:"api_key_description"`
-ApiKeyName         types.String `tfsdk:"api_key_name"`
-Api_key         types.Object `tfsdk:"api_key"`
-ApiKeyId         types.String `tfsdk:"api_key_id"`
-DomainCode         types.String `tfsdk:"domain_code"`
-IsEnabled         types.Bool `tfsdk:"is_enabled"`
-ModTime         types.String `tfsdk:"mod_time"`
-Modifier         types.String `tfsdk:"modifier"`
-PrimaryKey         types.String `tfsdk:"primary_key"`
-SecondaryKey         types.String `tfsdk:"secondary_key"`
-TenantId         types.String `tfsdk:"tenant_id"`
-Apikeyid         types.String `tfsdk:"apikeyid"`
-
+	ID                types.String `tfsdk:"id"`
+	ApiKeyDescription types.String `tfsdk:"api_key_description"`
+	ApiKeyName        types.String `tfsdk:"api_key_name"`
+	Api_key           types.Object `tfsdk:"api_key"`
+	ApiKeyId          types.String `tfsdk:"api_key_id"`
+	DomainCode        types.String `tfsdk:"domain_code"`
+	IsEnabled         types.Bool   `tfsdk:"is_enabled"`
+	ModTime           types.String `tfsdk:"mod_time"`
+	Modifier          types.String `tfsdk:"modifier"`
+	PrimaryKey        types.String `tfsdk:"primary_key"`
+	SecondaryKey      types.String `tfsdk:"secondary_key"`
+	TenantId          types.String `tfsdk:"tenant_id"`
+	Apikeyid          types.String `tfsdk:"apikeyid"`
 }
 
 func ConvertToFrameworkTypes(data map[string]interface{}, id string, rest []interface{}) (*ApikeydtoModel, error) {
@@ -360,38 +315,36 @@ func ConvertToFrameworkTypes(data map[string]interface{}, id string, rest []inte
 
 	dto.ID = types.StringValue(id)
 
-    dto.ApiKeyDescription = types.StringValue(data["api_key_description"].(string))
-dto.ApiKeyName = types.StringValue(data["api_key_name"].(string))
+	dto.ApiKeyDescription = types.StringValue(data["api_key_description"].(string))
+	dto.ApiKeyName = types.StringValue(data["api_key_name"].(string))
 
-			tempApi_key := data["api_key"].(map[string]interface{})
-			convertedTempApi_key, err := convertMapToObject(context.TODO(), tempApi_key)
-			if err != nil {
-				fmt.Println("ConvertMapToObject Error")
-			}
+	tempApi_key := data["api_key"].(map[string]interface{})
+	convertedTempApi_key, err := convertMapToObject(context.TODO(), tempApi_key)
+	if err != nil {
+		fmt.Println("ConvertMapToObject Error")
+	}
 
-			dto.Api_key = diagOff(types.ObjectValueFrom, context.TODO(), types.ObjectType{AttrTypes: map[string]attr.Type{
-				"api_key_description": types.StringType,
-"api_key_id": types.StringType,
-"api_key_name": types.StringType,
-"domain_code": types.StringType,
-"is_enabled": types.BoolType,
-"mod_time": types.StringType,
-"modifier": types.StringType,
-"primary_key": types.StringType,
-"secondary_key": types.StringType,
-"tenant_id": types.StringType,
-
-			}}.AttributeTypes(), convertedTempApi_key)
-dto.ApiKeyId = types.StringValue(data["api_key_id"].(string))
-dto.DomainCode = types.StringValue(data["domain_code"].(string))
-dto.IsEnabled = types.BoolValue(data["is_enabled"].(bool))
-dto.ModTime = types.StringValue(data["mod_time"].(string))
-dto.Modifier = types.StringValue(data["modifier"].(string))
-dto.PrimaryKey = types.StringValue(data["primary_key"].(string))
-dto.SecondaryKey = types.StringValue(data["secondary_key"].(string))
-dto.TenantId = types.StringValue(data["tenant_id"].(string))
-dto.Apikeyid = types.StringValue(data["apikeyid"].(string))
-
+	dto.Api_key = diagOff(types.ObjectValueFrom, context.TODO(), types.ObjectType{AttrTypes: map[string]attr.Type{
+		"api_key_description": types.StringType,
+		"api_key_id":          types.StringType,
+		"api_key_name":        types.StringType,
+		"domain_code":         types.StringType,
+		"is_enabled":          types.BoolType,
+		"mod_time":            types.StringType,
+		"modifier":            types.StringType,
+		"primary_key":         types.StringType,
+		"secondary_key":       types.StringType,
+		"tenant_id":           types.StringType,
+	}}.AttributeTypes(), convertedTempApi_key)
+	dto.ApiKeyId = types.StringValue(data["api_key_id"].(string))
+	dto.DomainCode = types.StringValue(data["domain_code"].(string))
+	dto.IsEnabled = types.BoolValue(data["is_enabled"].(bool))
+	dto.ModTime = types.StringValue(data["mod_time"].(string))
+	dto.Modifier = types.StringValue(data["modifier"].(string))
+	dto.PrimaryKey = types.StringValue(data["primary_key"].(string))
+	dto.SecondaryKey = types.StringValue(data["secondary_key"].(string))
+	dto.TenantId = types.StringValue(data["tenant_id"].(string))
+	dto.Apikeyid = types.StringValue(data["apikeyid"].(string))
 
 	return &dto, nil
 }
@@ -410,18 +363,7 @@ func diagOff[V, T interface{}](input func(ctx context.Context, elementType T, el
 }
 
 func getAndRefresh(diagnostics diag.Diagnostics, plan ApikeydtoModel, id string, rest ...interface{}) *ApikeydtoModel {
-	getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(id),
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-		)
-	}
-
-	response, _ := request(getExecFunc, "GET", "/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+	response, err := util.MakeReqeust("GET", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(id), "")
 	if response == nil {
 		diagnostics.AddError("UPDATING ERROR", "response invalid")
 		return nil
@@ -539,44 +481,6 @@ func convertInterfaceToAttr(ctx context.Context, value interface{}) (attr.Type, 
 	}
 }
 
-func makeSignature(method, url, timestamp, accessKey, secretKey string) string {
-	message := fmt.Sprintf("%s %s\n%s\n%s",
-		method,
-		url,
-		timestamp,
-		accessKey,
-	)
-
-	h := hmac.New(sha256.New, []byte(secretKey))
-	h.Write([]byte(message))
-
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
-}
-
-func request(command func(timestamp, accessKey, signature string) *exec.Cmd, method, url, accessKey, secretKey, requestBody string) (map[string]interface{}, error) {
-	timestamp := fmt.Sprintf("%d", time.Now().UnixMilli())
-	signature := makeSignature(method, url, timestamp, accessKey, secretKey)
-
-	cmd := command(timestamp, accessKey, signature)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, err
-	}
-
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
-		return nil, err
-	}
-
-	// code 200 but error occurs
-	if result["error"] != nil {
-		return result, fmt.Errorf("error with code 200: %s", result["error"])
-	}
-
-	return result, nil
-}
-
 func clearDoubleQuote(s string) string {
 	return strings.Replace(strings.Replace(strings.Replace(s, "\\", "", -1), "\"", "", -1), `"`, "", -1)
 }
@@ -586,19 +490,7 @@ func waitResourceCreated(ctx context.Context, id string, plan ApikeydtoModel) er
 		Pending: []string{"CREATING"},
 		Target:  []string{"CREATED"},
 		Refresh: func() (interface{}, string, error) {
-			getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-			return exec.Command("curl", "-s", "-X", "GET",  "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(id),
-					"-H", "accept: application/json;charset=UTF-8",
-					"-H", "Content-Type: application/json",
-					"-H", "x-ncp-apigw-timestamp: "+timestamp,
-					"-H", "x-ncp-iam-access-key: "+accessKey,
-					"-H", "x-ncp-apigw-signature-v2: "+signature,
-					"-H", "cache-control: no-cache",
-					"-H", "pragma: no-cache",
-				)
-			}
-
-			response, err := request(getExecFunc, "GET","/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+			response, err := util.MakeReqeust("GET", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(id), "")
 			if err != nil {
 				return response, "CREATING", nil
 			}
@@ -624,19 +516,7 @@ func waitResourceDeleted(ctx context.Context, id string, plan ApikeydtoModel) er
 		Pending: []string{"DELETING"},
 		Target:  []string{"DELETED"},
 		Refresh: func() (interface{}, string, error) {
-			getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-			return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(id),
-					"-H", "accept: application/json;charset=UTF-8",
-					"-H", "Content-Type: application/json",
-					"-H", "x-ncp-apigw-timestamp: "+timestamp,
-					"-H", "x-ncp-iam-access-key: "+accessKey,
-					"-H", "x-ncp-apigw-signature-v2: "+signature,
-					"-H", "cache-control: no-cache",
-					"-H", "pragma: no-cache",
-				)
-			}
-
-			response, _ := request(getExecFunc, "GET", "/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+			response, _ := util.MakeReqeust("GET", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"api-keys"+"/"+clearDoubleQuote(id), "")
 			if response["error"] != nil {
 				return response, "DELETED", nil
 			}
@@ -653,4 +533,3 @@ func waitResourceDeleted(ctx context.Context, id string, plan ApikeydtoModel) er
 	}
 	return nil
 }
-

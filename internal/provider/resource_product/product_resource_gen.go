@@ -204,19 +204,7 @@ func (a *productResource) Create(ctx context.Context, req resource.CreateRequest
 
 	tflog.Info(ctx, "CreateProduct reqParams="+strings.Replace(string(reqBody), `\"`, "", -1))
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "POST", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products",
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-			"-d", strings.Replace(string(reqBody), `\"`, "", -1),
-		)
-	}
-
-	response, err := request(execFunc, "POST", "/api/v1"+"/"+"products", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := util.MakeReqeust("POST", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products", strings.Replace(string(reqBody), `\"`, "", -1))
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
 		return
@@ -272,19 +260,7 @@ func (a *productResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	tflog.Info(ctx, "UpdateProduct reqParams="+strings.Replace(string(reqBody), `\"`, "", -1))
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "PATCH", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String()),
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-			"-d", strings.Replace(string(reqBody), `\"`, "", -1),
-		)
-	}
-
-	response, err := request(execFunc, "PATCH", "/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String()), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := util.MakeReqeust("PATCH",  "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String()), strings.Replace(string(reqBody), `\"`, "", -1))
 	if err != nil {
 		resp.Diagnostics.AddError("UPDATING ERROR", err.Error())
 		return
@@ -309,18 +285,7 @@ func (a *productResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	execFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "DELETE", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String()),
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-		)
-	}
-
-	_, err := request(execFunc, "DELETE", "/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String()), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+	_, err := util.MakeReqeust("DELETE", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(plan.Productid.String()), "")
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return
@@ -395,18 +360,7 @@ func diagOff[V, T interface{}](input func(ctx context.Context, elementType T, el
 }
 
 func getAndRefresh(diagnostics diag.Diagnostics, plan PostproductresponseModel, id string, rest ...interface{}) *PostproductresponseModel {
-	getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-		return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(id),
-			"-H", "Content-Type: application/json",
-			"-H", "x-ncp-apigw-timestamp: "+timestamp,
-			"-H", "x-ncp-iam-access-key: "+accessKey,
-			"-H", "x-ncp-apigw-signature-v2: "+signature,
-			"-H", "cache-control: no-cache",
-			"-H", "pragma: no-cache",
-		)
-	}
-
-	response, _ := request(getExecFunc, "GET", "/api/v1"+"/"+"products"+"/"+clearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+	response, err := util.MakeReqeust("GET", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(id), "")
 	if response == nil {
 		diagnostics.AddError("UPDATING ERROR", "response invalid")
 		return nil
@@ -524,44 +478,6 @@ func convertInterfaceToAttr(ctx context.Context, value interface{}) (attr.Type, 
 	}
 }
 
-func makeSignature(method, url, timestamp, accessKey, secretKey string) string {
-	message := fmt.Sprintf("%s %s\n%s\n%s",
-		method,
-		url,
-		timestamp,
-		accessKey,
-	)
-
-	h := hmac.New(sha256.New, []byte(secretKey))
-	h.Write([]byte(message))
-
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
-}
-
-func request(command func(timestamp, accessKey, signature string) *exec.Cmd, method, url, accessKey, secretKey, requestBody string) (map[string]interface{}, error) {
-	timestamp := fmt.Sprintf("%d", time.Now().UnixMilli())
-	signature := makeSignature(method, url, timestamp, accessKey, secretKey)
-
-	cmd := command(timestamp, accessKey, signature)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, err
-	}
-
-	var result map[string]interface{}
-	if err := json.Unmarshal(output, &result); err != nil {
-		return nil, err
-	}
-
-	// code 200 but error occurs
-	if result["error"] != nil {
-		return result, fmt.Errorf("error with code 200: %s", result["error"])
-	}
-
-	return result, nil
-}
-
 func clearDoubleQuote(s string) string {
 	return strings.Replace(strings.Replace(strings.Replace(s, "\\", "", -1), "\"", "", -1), `"`, "", -1)
 }
@@ -571,19 +487,7 @@ func waitResourceCreated(ctx context.Context, id string, plan Postproductrespons
 		Pending: []string{"CREATING"},
 		Target:  []string{"CREATED"},
 		Refresh: func() (interface{}, string, error) {
-			getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-			return exec.Command("curl", "-s", "-X", "GET",  "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(id),
-					"-H", "accept: application/json;charset=UTF-8",
-					"-H", "Content-Type: application/json",
-					"-H", "x-ncp-apigw-timestamp: "+timestamp,
-					"-H", "x-ncp-iam-access-key: "+accessKey,
-					"-H", "x-ncp-apigw-signature-v2: "+signature,
-					"-H", "cache-control: no-cache",
-					"-H", "pragma: no-cache",
-				)
-			}
-
-			response, err := request(getExecFunc, "GET","/api/v1"+"/"+"products"+"/"+clearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+			response, err := util.MakeReqeust("GET", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(id), "")
 			if err != nil {
 				return response, "CREATING", nil
 			}
@@ -609,19 +513,7 @@ func waitResourceDeleted(ctx context.Context, id string, plan Postproductrespons
 		Pending: []string{"DELETING"},
 		Target:  []string{"DELETED"},
 		Refresh: func() (interface{}, string, error) {
-			getExecFunc := func(timestamp, accessKey, signature string) *exec.Cmd {
-			return exec.Command("curl", "-s", "-X", "GET", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(id),
-					"-H", "accept: application/json;charset=UTF-8",
-					"-H", "Content-Type: application/json",
-					"-H", "x-ncp-apigw-timestamp: "+timestamp,
-					"-H", "x-ncp-iam-access-key: "+accessKey,
-					"-H", "x-ncp-apigw-signature-v2: "+signature,
-					"-H", "cache-control: no-cache",
-					"-H", "pragma: no-cache",
-				)
-			}
-
-			response, _ := request(getExecFunc, "GET", "/api/v1"+"/"+"products"+"/"+clearDoubleQuote(id), os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"), "")
+			response, _ := util.MakeReqeust("GET", "/api/v1", "https://apigateway.apigw.ntruss.com/api/v1"+"/"+"products"+"/"+clearDoubleQuote(id), "")
 			if response["error"] != nil {
 				return response, "DELETED", nil
 			}
