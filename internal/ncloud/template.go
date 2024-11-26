@@ -302,24 +302,18 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 		}
 	}
 
-	// Extract needed information
-	APIConfig, _, endpoint, err := util.ExtractConfig(configPath, resourceName)
-	if err != nil {
-		log.Fatalf("error occurred with ExtractConfig: %v", err)
-	}
-
 	refreshLogic, model, err := Gen_ConvertOAStoTFTypes(attributes)
 	if err != nil {
 		log.Fatalf("error occurred with Gen_ConvertOAStoTFTypes: %v", err)
 	}
 
-	targetResource := util.ExtractRequest(codeSpecPath, resourceName)
+	targetResourceRequest := util.ExtractRequest(codeSpecPath, resourceName)
 
-	for _, val := range targetResource.Create.RequestBody.Required {
+	for _, val := range targetResourceRequest.Create.RequestBody.Required {
 		createReqBody = createReqBody + fmt.Sprintf(`"%[1]s": clearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
 
-	for _, val := range targetResource.Update[0].RequestBody.Required {
+	for _, val := range targetResourceRequest.Update[0].RequestBody.Required {
 		updateReqBody = updateReqBody + fmt.Sprintf(`"%[1]s": clearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
 
@@ -327,15 +321,15 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 	t.dtoName = dtoName
 	t.model = model
 	t.refreshLogic = refreshLogic
-	t.endpoint = endpoint
-	t.deletePathParams = extractPathParams(APIConfig.Delete.Path)
-	t.updatePathParams = extractPathParams(APIConfig.Update[0].Path)
-	t.readPathParams = extractReadPathParams(APIConfig.Read.Path)
-	t.createPathParams = extractCreatePathParams(APIConfig.Create.Path)
-	t.deleteMethod = APIConfig.Delete.Method
-	t.updateMethod = APIConfig.Update[0].Method
-	t.readMethod = APIConfig.Read.Method
-	t.createMethod = APIConfig.Create.Method
+	t.endpoint = codeSpec.Provider["endpoint"].(string)
+	t.deletePathParams = extractPathParams(targetResourceRequest.Delete.Path)
+	t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
+	t.readPathParams = extractReadPathParams(targetResourceRequest.Read.Path)
+	t.createPathParams = extractCreatePathParams(targetResourceRequest.Create.Path)
+	t.deleteMethod = targetResourceRequest.Delete.Method
+	t.updateMethod = targetResourceRequest.Update[0].Method
+	t.readMethod = targetResourceRequest.Read.Method
+	t.createMethod = targetResourceRequest.Create.Method
 	t.createReqBody = createReqBody
 	t.updateReqBody = updateReqBody
 	t.idGetter = makeIdGetter(id)
