@@ -420,8 +420,8 @@ func extractReadPathParams(path string) string {
 }
 
 func makeIdGetter(target string) string {
-	s := "response"
 	parts := strings.Split(target, ".")
+	s := "response"
 
 	for idx, val := range parts {
 		if idx == len(parts)-1 {
