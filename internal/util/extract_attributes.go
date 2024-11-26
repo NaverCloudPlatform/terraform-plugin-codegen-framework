@@ -10,17 +10,30 @@ import (
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/spec"
 )
 
+type RequestTypeWithMethodAndPath struct {
+	spec.RequestType
+	Method string `json:"method"`
+	Path   string `json:"path"`
+}
+
+type RequestWithMethodAndPath struct {
+	Create RequestTypeWithMethodAndPath    `json:"create,omitempty"`
+	Read   RequestTypeWithMethodAndPath    `json:"read"`
+	Update []*RequestTypeWithMethodAndPath `json:"update"`
+	Delete RequestTypeWithMethodAndPath    `json:"delete"`
+}
+
 type RequestWithDTOName struct {
-	Create spec.RequestType       `json:"create,omitempty"`
-	Read   RequestTypeWithDTOName `json:"read"`
-	Update []*spec.RequestType    `json:"update"`
-	Delete spec.RequestType       `json:"delete"`
-	Name   string                 `json:"name"`
-	Id     string                 `json:"id"`
+	Create RequestTypeWithMethodAndPath    `json:"create,omitempty"`
+	Read   RequestTypeWithDTOName          `json:"read"`
+	Update []*RequestTypeWithMethodAndPath `json:"update"`
+	Delete RequestTypeWithMethodAndPath    `json:"delete"`
+	Name   string                          `json:"name"`
+	Id     string                          `json:"id"`
 }
 
 type RequestTypeWithDTOName struct {
-	spec.RequestType
+	RequestTypeWithMethodAndPath
 	Response string `json:"response"`
 }
 
