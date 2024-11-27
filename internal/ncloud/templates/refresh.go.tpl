@@ -30,20 +30,20 @@ func diagOff[V, T interface{}](input func(ctx context.Context, elementType T, el
 	return v
 }
 
-func getAndRefresh(diagnostics diag.Diagnostics, plan {{.DtoName | ToPascalCase}}Model, id string, rest ...interface{}) *{{.DtoName | ToPascalCase}}Model {
-	response, err := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
+func (a *{{.DtoName | ToPascalCase}}Model) refreshFromOutput(diagnostics diag.Diagnostics, id string, rest ...interface{}) {
+	response, _ := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
 	if response == nil {
 		diagnostics.AddError("UPDATING ERROR", "response invalid")
-		return nil
+		return
 	}
 
 	newPlan, err := ConvertToFrameworkTypes(convertKeys(response).(map[string]interface{}), id, rest)
 	if err != nil {
 		diagnostics.AddError("CREATING ERROR", err.Error())
-		return nil
+		return
 	}
 
-	return newPlan
+	*a = *newPlan
 }
 
 // convertKeys recursively converts all keys in a map from camelCase to snake_case
