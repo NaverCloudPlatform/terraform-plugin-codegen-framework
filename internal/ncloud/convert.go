@@ -18,13 +18,22 @@ func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
 		n := val.Name
 
 		if val.String != nil {
-			s = s + fmt.Sprintf(`dto.%[1]s = types.StringValue(data["%[2]s"].(string))`, util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
+			s = s + fmt.Sprintf(`
+			if data["%[2]s"] != nil {
+				dto.%[1]s = types.StringValue(data["%[2]s"].(string))
+			}`, util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.String `tfsdk:\"%[2]s\"`", util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		} else if val.Bool != nil {
-			s = s + fmt.Sprintf(`dto.%[1]s = types.BoolValue(data["%[2]s"].(bool))`, util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
+			s = s + fmt.Sprintf(`
+			if data["%[2]s"] != nil {
+				dto.%[1]s = types.BoolValue(data["%[2]s"].(string))
+			}`, util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.Bool `tfsdk:\"%[2]s\"`", util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		} else if val.Int64 != nil {
-			s = s + fmt.Sprintf(`dto.%[1]s = types.Int64Value(data["%[2]s"].(bool))`, util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
+			s = s + fmt.Sprintf(`
+			if data["%[2]s"] != nil {
+				dto.%[1]s = types.Int64Value(data["%[2]s"].(string))
+			}`, util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.Int64 `tfsdk:\"%[2]s\"`", util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		} else if val.List != nil {
 			if val.List.ElementType.String != nil {
@@ -34,22 +43,26 @@ func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
 			}
 		} else if val.ListNested != nil {
 			s = s + fmt.Sprintf(`
-			temp%[1]s := data["%[2]s"].([]interface{})
-			dto.%[1]s = diagOff(types.ListValueFrom, context.TODO(), types.ListType{ElemType:
-				%[3]s
-			}}.ElementType(), temp%[1]s)`, CamelToPascalCase(n), PascalToSnakeCase(n), GenArray(val.ListNested.NestedObject.Attributes, n)) + "\n"
+			if data["%[2]s"] != nil {
+				temp%[1]s := data["%[2]s"].([]interface{})
+				dto.%[1]s = diagOff(types.ListValueFrom, context.TODO(), types.ListType{ElemType:
+					%[3]s
+				}}.ElementType(), temp%[1]s)
+			}`, CamelToPascalCase(n), PascalToSnakeCase(n), GenArray(val.ListNested.NestedObject.Attributes, n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.List `tfsdk:\"%[2]s\"`", CamelToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		} else if val.SingleNested != nil {
 			s = s + fmt.Sprintf(`
-			temp%[1]s := data["%[2]s"].(map[string]interface{})
-			convertedTemp%[1]s, err := convertMapToObject(context.TODO(), temp%[1]s)
-			if err != nil {
-				fmt.Println("ConvertMapToObject Error")
-			}
+			if data["%[2]s"] != nil {
+				temp%[1]s := data["%[2]s"].(map[string]interface{})
+				convertedTemp%[1]s, err := convertMapToObject(context.TODO(), temp%[1]s)
+				if err != nil {
+					fmt.Println("ConvertMapToObject Error")
+				}
 
-			dto.%[1]s = diagOff(types.ObjectValueFrom, context.TODO(), types.ObjectType{AttrTypes: map[string]attr.Type{
-				%[3]s
-			}}.AttributeTypes(), convertedTemp%[1]s)`, CamelToPascalCase(n), PascalToSnakeCase(n), GenObject(val.SingleNested.Attributes, n)) + "\n"
+				dto.%[1]s = diagOff(types.ObjectValueFrom, context.TODO(), types.ObjectType{AttrTypes: map[string]attr.Type{
+					%[3]s
+				}}.AttributeTypes(), convertedTemp%[1]s)
+			}`, CamelToPascalCase(n), PascalToSnakeCase(n), GenObject(val.SingleNested.Attributes, n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.Object `tfsdk:\"%[2]s\"`", CamelToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		}
 
