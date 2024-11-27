@@ -173,14 +173,14 @@ func ClearDoubleQuote(s string) string {
 	return strings.Replace(strings.Replace(strings.Replace(s, "\\", "", -1), "\"", "", -1), `"`, "", -1)
 }
 
-func MakeReqeust(method, endpoint, path, reqBody string) (map[string]interface{}, error) {
+func MakeReqeust(method, path, endpoint, reqBody string) (map[string]interface{}, error) {
 	access_key := os.Getenv("NCLOUD_ACCESS_KEY")
 	secret_key := os.Getenv("NCLOUD_SECRET_KEY")
 	timestamp := fmt.Sprintf("%d", time.Now().UnixMilli())
 	signature := makeSignature(method, ExtractPath(endpoint), timestamp, access_key, secret_key)
 	b := bytes.NewBuffer([]byte(reqBody))
 
-	req, err := http.NewRequest(method, endpoint+path, b)
+	req, err := http.NewRequest(method, endpoint, b)
 	if err != nil {
 		return nil, err
 	}
