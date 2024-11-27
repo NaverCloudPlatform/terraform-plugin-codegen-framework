@@ -225,12 +225,14 @@ func (t *Template) RenderRefresh() []byte {
 	}
 
 	data := struct {
+		ResourceName   string
 		DtoName        string
 		RefreshLogic   string
 		ReadMethod     string
 		Endpoint       string
 		ReadPathParams string
 	}{
+		ResourceName:   t.resourceName,
 		DtoName:        t.dtoName,
 		RefreshLogic:   t.refreshLogic,
 		ReadMethod:     t.readMethod,
@@ -325,7 +327,7 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 	t.deletePathParams = extractPathParams(targetResourceRequest.Delete.Path)
 	t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
 	t.readPathParams = extractReadPathParams(targetResourceRequest.Read.Path)
-	t.createPathParams = extractCreatePathParams(targetResourceRequest.Create.Path)
+	t.createPathParams = extractPathParams(targetResourceRequest.Create.Path)
 	t.deleteMethod = targetResourceRequest.Delete.Method
 	t.updateMethod = targetResourceRequest.Update[0].Method
 	t.readMethod = targetResourceRequest.Read.Method
@@ -338,31 +340,6 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 }
 
 func extractPathParams(path string) string {
-	parts := strings.Split(path, "/")
-	s := ``
-
-	for _, val := range parts {
-
-		if len(val) < 1 {
-			continue
-		}
-
-		s = s + `+"/"+`
-
-		start := strings.Index(val, "{")
-
-		// if val doesn't wrapped with curly brace
-		if start == -1 {
-			s = s + fmt.Sprintf(`"%s"`, val)
-		} else {
-			s = s + fmt.Sprintf(`clearDoubleQuote(plan.%s.String())`, util.PathToPascal(val))
-		}
-	}
-
-	return s
-}
-
-func extractCreatePathParams(path string) string {
 	parts := strings.Split(path, "/")
 	s := ``
 
