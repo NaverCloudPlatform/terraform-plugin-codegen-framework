@@ -74,21 +74,6 @@ func WriteDataSources(dataSourcesSchema, dataSourcesModels, customTypeValue, dat
 			return err
 		}
 
-		// _, err = f.Write(dataSourcesModels[k])
-		// if err != nil {
-		// 	return err
-		// }
-
-		// _, err = f.Write(customTypeValue[k])
-		// if err != nil {
-		// 	return err
-		// }
-
-		// _, err = f.Write(dataSourcesToFrom[k])
-		// if err != nil {
-		// 	return err
-		// }
-
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
@@ -174,23 +159,6 @@ func WriteResources(resourcesSchema, resourcesModels, customTypeValue, resources
 		if err != nil {
 			return err
 		}
-
-		// 기존 terraform에서 제공한 schema를 생성하는 부분
-		// _, err = f.Write(customTypeValue[k])
-		// if err != nil {
-		// 	return err
-		// }
-
-		// 현재 불필요
-		// _, err = f.Write(resourcesModels[k])
-		// if err != nil {
-		// 	return err
-		// }
-
-		// _, err = f.Write(resourcesToFrom[k])
-		// if err != nil {
-		// 	return err
-		// }
 
 		filePath := f.Name()
 
