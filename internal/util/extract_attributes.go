@@ -50,10 +50,11 @@ type CodeSpec struct {
 }
 
 type Resource struct {
-	Name              string `json:"name"`
-	Schema            Schema `json:"schema"`
-	RefreshObjectName string `json:"dto_name"`
-	Id                string `json:"id"`
+	Name                string `json:"name"`
+	Schema              Schema `json:"schema"`
+	RefreshObjectName   string `json:"dto_name"`
+	ImportStateOverride string `json:"import_state_override"`
+	Id                  string `json:"id"`
 }
 
 type Schema struct {

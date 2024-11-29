@@ -30,3 +30,6 @@ var WaitTemplate string
 
 //go:embed templates/test.go.tpl
 var TestTemplate string
+
+//go:embed templates/import.go.tpl
+var ImportStateTemplate string

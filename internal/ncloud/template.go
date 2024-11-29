@@ -24,6 +24,7 @@ type Template struct {
 	codeSpecPath      string
 	providerName      string
 	resourceName      string
+	importStateLogic  string
 	refreshObjectName string
 	model             string
 	refreshLogic      string
@@ -61,6 +62,30 @@ func (t *Template) RenderInitial() []byte {
 	err = initialTemplate.ExecuteTemplate(&b, "Initial", data)
 	if err != nil {
 		log.Fatalf("error occurred with generating Initial template: %v", err)
+	}
+
+	return b.Bytes()
+}
+
+func (t *Template) RenderImportState() []byte {
+	var b bytes.Buffer
+
+	initialTemplate, err := template.New("").Funcs(t.funcMap).Parse(ImportStateTemplate)
+	if err != nil {
+		log.Fatalf("error occurred with baseTemplate at rendering initial: %v", err)
+	}
+
+	data := struct {
+		ResourceName     string
+		ImportStateLogic string
+	}{
+		ResourceName:     t.resourceName,
+		ImportStateLogic: t.importStateLogic,
+	}
+
+	err = initialTemplate.ExecuteTemplate(&b, "ImportState", data)
+	if err != nil {
+		log.Fatalf("error occurred with generating ImportState template: %v", err)
 	}
 
 	return b.Bytes()
@@ -315,6 +340,7 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 	var attributes resource.Attributes
 	var createReqBody string
 	var updateReqBody string
+	var importStateOverride string
 
 	t := &Template{
 		configPath:   configPath,
@@ -324,8 +350,6 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 
 	funcMap := util.CreateFuncMap()
 
-	t.funcMap = funcMap
-
 	codeSpec := util.ExtractAttribute(codeSpecPath)
 
 	for _, resource := range codeSpec.Resources {
@@ -333,6 +357,7 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 			refreshObjectName = resource.RefreshObjectName
 			id = resource.Id
 			attributes = resource.Schema.Attributes
+			importStateOverride = resource.ImportStateOverride
 		}
 	}
 
@@ -351,8 +376,10 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 		updateReqBody = updateReqBody + fmt.Sprintf(`"%[1]s": clearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
 
+	t.funcMap = funcMap
 	t.providerName = codeSpec.Provider["name"].(string)
 	t.refreshObjectName = refreshObjectName
+	t.importStateLogic = MakeImportStateLogic(importStateOverride)
 	t.model = model
 	t.refreshLogic = refreshLogic
 	t.endpoint = codeSpec.Provider["endpoint"].(string)
@@ -439,6 +466,21 @@ func makeIdGetter(target string) string {
 		}
 
 		s = s + fmt.Sprintf(`["%s"].(map[string]interface{})`, util.ToCamelCase(val))
+	}
+
+	return s
+}
+
+func MakeImportStateLogic(target string) string {
+	parts := strings.Split(target, ".")
+
+	if len(parts) < 2 {
+		return `resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)` + "\n"
+	}
+
+	s := `parts := strings.Split(req.ID, ".")` + "\n"
+	for idx, val := range parts {
+		s = s + fmt.Sprintf(`resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("%s"), parts[%d])...)`, util.ToLowerCase(util.PathToPascal(val)), idx) + "\n"
 	}
 
 	return s
