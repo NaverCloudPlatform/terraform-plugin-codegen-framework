@@ -196,5 +196,10 @@ func generateDataSourceCode(ctx context.Context, spec spec.Specification, output
 		return fmt.Errorf("error writing Go code to output: %w", err)
 	}
 
+	err = output.WriteDataSourceTests(formattedSchemas, formattedModels, formattedCustomTypeValue, formattedToFromFunctions, outputPath, packageName)
+	if err != nil {
+		return fmt.Errorf("error writing Go code to output: %w", err)
+	}
+
 	return nil
 }
