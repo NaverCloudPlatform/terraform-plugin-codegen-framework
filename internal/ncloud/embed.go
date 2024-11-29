@@ -27,3 +27,6 @@ var RefreshTemplate string
 
 //go:embed templates/wait.go.tpl
 var WaitTemplate string
+
+//go:embed templates/test.go.tpl
+var TestTemplate string

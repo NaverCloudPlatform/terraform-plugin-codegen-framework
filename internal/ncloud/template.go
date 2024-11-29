@@ -276,6 +276,38 @@ func (t *Template) RenderWait() []byte {
 	return b.Bytes()
 }
 
+func (t *Template) RenderTest() []byte {
+	var b bytes.Buffer
+
+	testTemplate, err := template.New("").Funcs(t.funcMap).Parse(TestTemplate)
+	if err != nil {
+		log.Fatalf("error occurred with baseTemplate at rendering test: %v", err)
+	}
+
+	data := struct {
+		ProviderName      string
+		ResourceName      string
+		RefreshObjectName string
+		ReadMethod        string
+		Endpoint          string
+		ReadPathParams    string
+	}{
+		ProviderName:      t.providerName,
+		ResourceName:      t.resourceName,
+		RefreshObjectName: t.refreshObjectName,
+		ReadMethod:        t.readMethod,
+		Endpoint:          t.endpoint,
+		ReadPathParams:    t.readPathParams,
+	}
+
+	err = testTemplate.ExecuteTemplate(&b, "Test", data)
+	if err != nil {
+		log.Fatalf("error occurred with Generating test: %v", err)
+	}
+
+	return b.Bytes()
+}
+
 // 초기화를 통해 필요한 데이터들을 미리 계산한다.
 func New(configPath, codeSpecPath, resourceName string) *Template {
 	var refreshObjectName string
