@@ -4,7 +4,7 @@
 // ResourceName string
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var plan {{.DtoName | ToPascalCase}}Model
+	var plan {{.RefreshObjectName | ToPascalCase}}Model
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {

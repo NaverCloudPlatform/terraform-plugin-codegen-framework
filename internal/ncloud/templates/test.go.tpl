@@ -1,0 +1,98 @@
+{{ define "Test" }}
+// Template for generating Terraform provider test code
+// Needed data is as follows.
+// ProviderName string
+// ResourceName string
+// RefreshObjectName string
+// ReadMethod string
+// Endpoint string
+// ReadPathParams string, optional
+
+package objectstorage_test
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"regexp"
+	"testing"
+
+	"github.com/NaverCloudPlatform/ncloud-sdk-go-v2/ncloud"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
+	. "github.com/terraform-providers/terraform-provider-ncloud/internal/acctest"
+	"github.com/terraform-providers/terraform-provider-ncloud/internal/conn"
+)
+
+func TestAccResourceNcloud{{.ProviderName | ToPascalCase}}_{{.ResourceName | ToLowerCase}}_basic(t *testing.T) {
+	{{.ResourceName | ToCamelCase}}Name := fmt.Sprintf("tf-{{.ResourceName | ToCamelCase}}-%s", acctest.RandString(5))
+
+	resourceName := "ncloud_{{.ProviderName | ToLowerCase}}_{{.ResourceName | ToLowerCase}}.testing_{{.ResourceName | ToLowerCase}}"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheck{{.ResourceName | ToPascalCase}}Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAcc{{.ResourceName | ToLowerCase}}Config({{.ResourceName | ToCamelCase}}Name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheck{{.ResourceName | ToLowerCase}}Exists(resourceName, GetTestProvider(true)),
+					resource.TestMatchResourceAttr(resourceName, "{{.ResourceName | ToCamelCase}}_name", {{.ResourceName | ToCamelCase}}Name),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheck{{.ResourceName | ToLowerCase}}Exists(n string, provider *schema.Provider) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resource, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found %s", n)
+		}
+
+		if resource.Primary.ID == "" {
+			return fmt.Errorf("no ID is set")
+		}
+
+		config := provider.Meta().(*conn.ProviderConfig)
+        response, err := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
+        if response == nil {
+            return err
+        }
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf("{{.ResourceName | ToCamelCase}} not found")
+	}
+}
+
+func testAccCheck{{.ResourceName | ToPascalCase}}Destroy(s *terraform.State) error {
+	config := GetTestProvider(true).Meta().(*conn.ProviderConfig)
+
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "ncloud_{{.ProviderName | ToLowerCase}}_{{.ResourceName | ToLowerCase}}.testing_{{.ResourceName | ToLowerCase}}" {
+			continue
+		}
+
+        response, _ := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
+        if response["error"] != nil {
+            return nil
+        }
+	}
+
+	return nil
+}
+
+func testAcc{{.ResourceName | ToLowerCase}}Config({{.ResourceName | ToCamelCase}}Name string) string {
+	return fmt.Sprintf(`
+	resource "ncloud_{{.ProviderName | ToLowerCase}}_{{.ResourceName | ToLowerCase}}" "testing_{{.ResourceName | ToLowerCase}}" {
+		{{.ResourceName | ToCamelCase}}_name			= "%[1]s"
+	}`, bucketName, key, source)
+}

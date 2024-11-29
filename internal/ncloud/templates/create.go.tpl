@@ -2,14 +2,14 @@
 // Template for generating Terraform provider Create operation code
 // Needed data is as follows.
 // ResourceName string
-// DtoName string
+// RefreshObjectName string
 // CreateReqBody string
 // CreateMethod string
 // Endpoint string
 // CreatePathParams string, optional
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan {{.DtoName | ToPascalCase}}Model
+	var plan {{.RefreshObjectName | ToPascalCase}}Model
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {

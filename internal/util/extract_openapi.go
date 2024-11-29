@@ -62,7 +62,7 @@ func ExtractResourceName(jsonFilePath string) (string, error) {
 	return openAPI.Info.Name, nil
 }
 
-func ExtractDto(jsonFilePath, dtoName string) ([]byte, error) {
+func ExtractDto(jsonFilePath, refreshObjectName string) ([]byte, error) {
 	var openAPI oas.T
 
 	byteValue, err := os.ReadFile(jsonFilePath)
@@ -75,7 +75,7 @@ func ExtractDto(jsonFilePath, dtoName string) ([]byte, error) {
 		return nil, fmt.Errorf("error unmarshalling JSON: %w", err)
 	}
 
-	schema := openAPI.Components.Schemas[dtoName]
+	schema := openAPI.Components.Schemas[refreshObjectName]
 	jsonBytes, err := json.Marshal(schema)
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling schema to JSON: %w", err)

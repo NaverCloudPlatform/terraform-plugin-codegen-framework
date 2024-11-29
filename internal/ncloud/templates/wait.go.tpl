@@ -1,12 +1,12 @@
 {{ define "Wait" }}
 // Template for generating Terraform provider Waiting operation code
 // Needed data is as follows.
-// DtoName string
+// RefreshObjectName string
 // ReadMethod string
 // Endpoint string
 // ReadPathParams string, optional
 
-func waitResourceCreated(ctx context.Context, id string, plan {{.DtoName | ToPascalCase}}Model) error {
+func waitResourceCreated(ctx context.Context, id string, plan {{.RefreshObjectName | ToPascalCase}}Model) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{"CREATING"},
 		Target:  []string{"CREATED"},
@@ -32,7 +32,7 @@ func waitResourceCreated(ctx context.Context, id string, plan {{.DtoName | ToPas
 	return nil
 }
 
-func waitResourceDeleted(ctx context.Context, id string, plan {{.DtoName | ToPascalCase}}Model) error {
+func waitResourceDeleted(ctx context.Context, id string, plan {{.RefreshObjectName | ToPascalCase}}Model) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{"DELETING"},
 		Target:  []string{"DELETED"},

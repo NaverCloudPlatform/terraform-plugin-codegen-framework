@@ -7,7 +7,7 @@
 // DeletePathParams string, optional
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var plan {{.DtoName | ToPascalCase}}Model
+	var plan {{.RefreshObjectName | ToPascalCase}}Model
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {

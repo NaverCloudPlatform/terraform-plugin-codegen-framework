@@ -23,16 +23,16 @@ type RequestWithMethodAndPath struct {
 	Delete RequestTypeWithMethodAndPath    `json:"delete"`
 }
 
-type RequestWithDTOName struct {
-	Create RequestTypeWithMethodAndPath    `json:"create,omitempty"`
-	Read   RequestTypeWithDTOName          `json:"read"`
-	Update []*RequestTypeWithMethodAndPath `json:"update"`
-	Delete RequestTypeWithMethodAndPath    `json:"delete"`
-	Name   string                          `json:"name"`
-	Id     string                          `json:"id"`
+type RequestWithRefreshObjectName struct {
+	Create RequestTypeWithMethodAndPath     `json:"create,omitempty"`
+	Read   RequestTypeWithRefreshObjectName `json:"read"`
+	Update []*RequestTypeWithMethodAndPath  `json:"update"`
+	Delete RequestTypeWithMethodAndPath     `json:"delete"`
+	Name   string                           `json:"name"`
+	Id     string                           `json:"id"`
 }
 
-type RequestTypeWithDTOName struct {
+type RequestTypeWithRefreshObjectName struct {
 	RequestTypeWithMethodAndPath
 	Response string `json:"response"`
 }
@@ -42,18 +42,18 @@ type RequestWithResponse struct {
 }
 
 type CodeSpec struct {
-	Provider    map[string]interface{} `json:"provider"`
-	Resources   []Resource             `json:"resources"`
-	DataSources []Resource             `json:"datasources"`
-	Requests    []RequestWithDTOName   `json:"requests"`
-	Version     string                 `json:"version"`
+	Provider    map[string]interface{}         `json:"provider"`
+	Resources   []Resource                     `json:"resources"`
+	DataSources []Resource                     `json:"datasources"`
+	Requests    []RequestWithRefreshObjectName `json:"requests"`
+	Version     string                         `json:"version"`
 }
 
 type Resource struct {
-	Name    string `json:"name"`
-	Schema  Schema `json:"schema"`
-	DtoName string `json:"dto_name"`
-	Id      string `json:"id"`
+	Name              string `json:"name"`
+	Schema            Schema `json:"schema"`
+	RefreshObjectName string `json:"dto_name"`
+	Id                string `json:"id"`
 }
 
 type Schema struct {
@@ -112,7 +112,7 @@ func ExtractAttribute(file string) *CodeSpec {
 	return &result
 }
 
-func ExtractRequest(file, resourceName string) RequestWithDTOName {
+func ExtractRequest(file, resourceName string) RequestWithRefreshObjectName {
 
 	jsonFile, err := os.Open(file)
 	if err != nil {

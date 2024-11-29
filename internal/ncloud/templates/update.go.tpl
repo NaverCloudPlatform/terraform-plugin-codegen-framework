@@ -2,14 +2,14 @@
 // Template for generating Terraform provider Update operation code
 // Needed data is as follows.
 // ResourceName string
-// DtoName string
+// RefreshObjectName string
 // UpdateReqBody string
 // UpdateMethod string
 // Endpoint string
 // UpdatePathParams string, optional
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan {{.DtoName | ToPascalCase}}Model
+	var plan {{.RefreshObjectName | ToPascalCase}}Model
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {

@@ -20,26 +20,26 @@ import (
 // RenderDelete(): Delete 함수를 생성한다.
 // 필요 데이터들을 초기화 시 계산하고, 각 메서드 별 렌더링을 수행한다..
 type Template struct {
-	configPath       string
-	codeSpecPath     string
-	providerName     string
-	resourceName     string
-	dtoName          string
-	model            string
-	refreshLogic     string
-	endpoint         string
-	deletePathParams string
-	updatePathParams string
-	readPathParams   string
-	createPathParams string
-	deleteMethod     string
-	updateMethod     string
-	readMethod       string
-	createMethod     string
-	createReqBody    string
-	updateReqBody    string
-	idGetter         string
-	funcMap          template.FuncMap
+	configPath        string
+	codeSpecPath      string
+	providerName      string
+	resourceName      string
+	refreshObjectName string
+	model             string
+	refreshLogic      string
+	endpoint          string
+	deletePathParams  string
+	updatePathParams  string
+	readPathParams    string
+	createPathParams  string
+	deleteMethod      string
+	updateMethod      string
+	readMethod        string
+	createMethod      string
+	createReqBody     string
+	updateReqBody     string
+	idGetter          string
+	funcMap           template.FuncMap
 }
 
 func (t *Template) RenderInitial() []byte {
@@ -75,21 +75,21 @@ func (t *Template) RenderCreate() []byte {
 	}
 
 	data := struct {
-		ResourceName     string
-		DtoName          string
-		CreateReqBody    string
-		CreateMethod     string
-		Endpoint         string
-		CreatePathParams string
-		IdGetter         string
+		ResourceName      string
+		RefreshObjectName string
+		CreateReqBody     string
+		CreateMethod      string
+		Endpoint          string
+		CreatePathParams  string
+		IdGetter          string
 	}{
-		ResourceName:     t.resourceName,
-		DtoName:          t.dtoName,
-		CreateReqBody:    t.createReqBody,
-		CreateMethod:     t.createMethod,
-		Endpoint:         t.endpoint,
-		CreatePathParams: t.createPathParams,
-		IdGetter:         t.idGetter,
+		ResourceName:      t.resourceName,
+		RefreshObjectName: t.refreshObjectName,
+		CreateReqBody:     t.createReqBody,
+		CreateMethod:      t.createMethod,
+		Endpoint:          t.endpoint,
+		CreatePathParams:  t.createPathParams,
+		IdGetter:          t.idGetter,
 	}
 
 	err = createTemplate.ExecuteTemplate(&b, "Create", data)
@@ -109,13 +109,13 @@ func (t *Template) RenderRead() []byte {
 	}
 
 	data := struct {
-		ResourceName   string
-		DtoName        string
-		ReadPathParams string
+		ResourceName      string
+		RefreshObjectName string
+		ReadPathParams    string
 	}{
-		ResourceName:   t.resourceName,
-		DtoName:        t.dtoName,
-		ReadPathParams: t.readPathParams,
+		ResourceName:      t.resourceName,
+		RefreshObjectName: t.refreshObjectName,
+		ReadPathParams:    t.readPathParams,
 	}
 
 	err = readTemplate.ExecuteTemplate(&b, "Read", data)
@@ -135,21 +135,21 @@ func (t *Template) RenderUpdate() []byte {
 	}
 
 	data := struct {
-		ResourceName     string
-		DtoName          string
-		UpdateReqBody    string
-		UpdateMethod     string
-		Endpoint         string
-		UpdatePathParams string
-		ReadPathParams   string
+		ResourceName      string
+		RefreshObjectName string
+		UpdateReqBody     string
+		UpdateMethod      string
+		Endpoint          string
+		UpdatePathParams  string
+		ReadPathParams    string
 	}{
-		ResourceName:     t.resourceName,
-		DtoName:          t.dtoName,
-		UpdateReqBody:    t.updateReqBody,
-		UpdateMethod:     t.updateMethod,
-		Endpoint:         t.endpoint,
-		UpdatePathParams: t.updatePathParams,
-		ReadPathParams:   t.readPathParams,
+		ResourceName:      t.resourceName,
+		RefreshObjectName: t.refreshObjectName,
+		UpdateReqBody:     t.updateReqBody,
+		UpdateMethod:      t.updateMethod,
+		Endpoint:          t.endpoint,
+		UpdatePathParams:  t.updatePathParams,
+		ReadPathParams:    t.readPathParams,
 	}
 
 	err = updateTemplate.ExecuteTemplate(&b, "Update", data)
@@ -169,19 +169,19 @@ func (t *Template) RenderDelete() []byte {
 	}
 
 	data := struct {
-		ResourceName     string
-		DtoName          string
-		DeleteMethod     string
-		Endpoint         string
-		DeletePathParams string
-		IdGetter         string
+		ResourceName      string
+		RefreshObjectName string
+		DeleteMethod      string
+		Endpoint          string
+		DeletePathParams  string
+		IdGetter          string
 	}{
-		ResourceName:     t.resourceName,
-		DtoName:          t.dtoName,
-		DeleteMethod:     t.deleteMethod,
-		Endpoint:         t.endpoint,
-		DeletePathParams: t.deletePathParams,
-		IdGetter:         t.idGetter,
+		ResourceName:      t.resourceName,
+		RefreshObjectName: t.refreshObjectName,
+		DeleteMethod:      t.deleteMethod,
+		Endpoint:          t.endpoint,
+		DeletePathParams:  t.deletePathParams,
+		IdGetter:          t.idGetter,
 	}
 
 	err = deleteTemplate.ExecuteTemplate(&b, "Delete", data)
@@ -201,11 +201,11 @@ func (t *Template) RenderModel() []byte {
 	}
 
 	data := struct {
-		DtoName string
-		Model   string
+		RefreshObjectName string
+		Model             string
 	}{
-		DtoName: t.dtoName,
-		Model:   t.model,
+		RefreshObjectName: t.refreshObjectName,
+		Model:             t.model,
 	}
 
 	err = modelTemplate.ExecuteTemplate(&b, "Model", data)
@@ -225,19 +225,19 @@ func (t *Template) RenderRefresh() []byte {
 	}
 
 	data := struct {
-		ResourceName   string
-		DtoName        string
-		RefreshLogic   string
-		ReadMethod     string
-		Endpoint       string
-		ReadPathParams string
+		ResourceName      string
+		RefreshObjectName string
+		RefreshLogic      string
+		ReadMethod        string
+		Endpoint          string
+		ReadPathParams    string
 	}{
-		ResourceName:   t.resourceName,
-		DtoName:        t.dtoName,
-		RefreshLogic:   t.refreshLogic,
-		ReadMethod:     t.readMethod,
-		Endpoint:       t.endpoint,
-		ReadPathParams: t.readPathParams,
+		ResourceName:      t.resourceName,
+		RefreshObjectName: t.refreshObjectName,
+		RefreshLogic:      t.refreshLogic,
+		ReadMethod:        t.readMethod,
+		Endpoint:          t.endpoint,
+		ReadPathParams:    t.readPathParams,
 	}
 
 	err = refreshTemplate.ExecuteTemplate(&b, "Refresh", data)
@@ -257,15 +257,15 @@ func (t *Template) RenderWait() []byte {
 	}
 
 	data := struct {
-		ReadMethod     string
-		Endpoint       string
-		ReadPathParams string
-		DtoName        string
+		ReadMethod        string
+		Endpoint          string
+		ReadPathParams    string
+		RefreshObjectName string
 	}{
-		ReadMethod:     t.readMethod,
-		Endpoint:       t.endpoint,
-		ReadPathParams: t.readPathParams,
-		DtoName:        t.dtoName,
+		ReadMethod:        t.readMethod,
+		Endpoint:          t.endpoint,
+		ReadPathParams:    t.readPathParams,
+		RefreshObjectName: t.refreshObjectName,
 	}
 
 	err = waitTemplate.ExecuteTemplate(&b, "Wait", data)
@@ -278,7 +278,7 @@ func (t *Template) RenderWait() []byte {
 
 // 초기화를 통해 필요한 데이터들을 미리 계산한다.
 func New(configPath, codeSpecPath, resourceName string) *Template {
-	var dtoName string
+	var refreshObjectName string
 	var id string
 	var attributes resource.Attributes
 	var createReqBody string
@@ -298,7 +298,7 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 
 	for _, resource := range codeSpec.Resources {
 		if resource.Name == resourceName {
-			dtoName = resource.DtoName
+			refreshObjectName = resource.RefreshObjectName
 			id = resource.Id
 			attributes = resource.Schema.Attributes
 		}
@@ -320,7 +320,7 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 	}
 
 	t.providerName = codeSpec.Provider["name"].(string)
-	t.dtoName = dtoName
+	t.refreshObjectName = refreshObjectName
 	t.model = model
 	t.refreshLogic = refreshLogic
 	t.endpoint = codeSpec.Provider["endpoint"].(string)

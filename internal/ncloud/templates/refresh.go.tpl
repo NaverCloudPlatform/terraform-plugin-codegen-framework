@@ -1,14 +1,14 @@
 {{ define "Refresh" }}
 // Template for generating Terraform provider Refresh operation code
 // Needed data is as follows.
-// DtoName string
+// RefreshObjectName string
 // RefreshLogic string
 // ReadMethod string
 // Endpoint string
 // ReadPathParams string, optional
 
-func ConvertToFrameworkTypes(data map[string]interface{}, id string, rest []interface{}) (*{{.DtoName | ToPascalCase}}Model, error) {
-	var dto {{.DtoName | ToPascalCase}}Model
+func ConvertToFrameworkTypes(data map[string]interface{}, id string, rest []interface{}) (*{{.RefreshObjectName | ToPascalCase}}Model, error) {
+	var dto {{.RefreshObjectName | ToPascalCase}}Model
 
 	dto.ID = types.StringValue(id)
 
@@ -30,7 +30,7 @@ func diagOff[V, T interface{}](input func(ctx context.Context, elementType T, el
 	return v
 }
 
-func (a *{{.DtoName | ToPascalCase}}Model) refreshFromOutput(diagnostics diag.Diagnostics, id string, rest ...interface{}) {
+func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(diagnostics diag.Diagnostics, id string, rest ...interface{}) {
 	response, _ := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
 	if response == nil {
 		diagnostics.AddError("UPDATING ERROR", "response invalid")
