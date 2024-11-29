@@ -11,7 +11,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Read(ctx context.Context, req 
 		return
 	}
 
-	plan.refreshFromOutput(resp.Diagnostics, plan, plan.ID.String())
+	plan.refreshFromOutput(resp.Diagnostics, plan.ID.String())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 	if resp.Diagnostics.HasError() {

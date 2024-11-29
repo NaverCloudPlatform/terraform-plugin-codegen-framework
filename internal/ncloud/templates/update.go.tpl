@@ -38,7 +38,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, re
 
 	tflog.Info(ctx, "Update{{.ResourceName | ToPascalCase}} response="+common.MarshalUncheckedString(response))
 
-	plan.refreshFromOutput(resp.Diagnostics, plan, plan.ID.String())
+	plan.refreshFromOutput(resp.Diagnostics, plan.ID.String())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
