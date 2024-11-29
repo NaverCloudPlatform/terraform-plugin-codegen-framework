@@ -60,8 +60,7 @@ func testAccCheck{{.ResourceName | ToLowerCase}}Exists(n string, provider *schem
 			return fmt.Errorf("no ID is set")
 		}
 
-		config := provider.Meta().(*conn.ProviderConfig)
-        response, err := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
+        response, err := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(resource.Primary.ID){{end}}, "")
         if response == nil {
             return err
         }
@@ -74,14 +73,12 @@ func testAccCheck{{.ResourceName | ToLowerCase}}Exists(n string, provider *schem
 }
 
 func testAccCheck{{.ResourceName | ToPascalCase}}Destroy(s *terraform.State) error {
-	config := GetTestProvider(true).Meta().(*conn.ProviderConfig)
-
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "ncloud_{{.ProviderName | ToLowerCase}}_{{.ResourceName | ToLowerCase}}.testing_{{.ResourceName | ToLowerCase}}" {
 			continue
 		}
 
-        response, _ := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
+        response, _ := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(rs.Primary.ID){{end}}, "")
         if response["error"] != nil {
             return nil
         }
@@ -94,5 +91,11 @@ func testAcc{{.ResourceName | ToLowerCase}}Config({{.ResourceName | ToCamelCase}
 	return fmt.Sprintf(`
 	resource "ncloud_{{.ProviderName | ToLowerCase}}_{{.ResourceName | ToLowerCase}}" "testing_{{.ResourceName | ToLowerCase}}" {
 		{{.ResourceName | ToCamelCase}}_name			= "%[1]s"
-	}`, bucketName, key, source)
+	}`, {{.ResourceName | ToCamelCase}}Name)
 }
+
+func clearDoubleQuote(s string) string {
+	return strings.Replace(strings.Replace(strings.Replace(s, "\\", "", -1), "\"", "", -1), `"`, "", -1)
+}
+
+{{ end }}
