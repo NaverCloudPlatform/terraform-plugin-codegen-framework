@@ -196,5 +196,10 @@ func generateResourceCode(ctx context.Context, spec spec.Specification, outputPa
 		return fmt.Errorf("error writing Go code to output: %w", err)
 	}
 
+	err = output.WriteResourceTests(formattedSchemas, formattedModels, formattedCustomTypeValue, formattedToFromFunctions, outputPath, packageName)
+	if err != nil {
+		return fmt.Errorf("error writing Go code to output: %w", err)
+	}
+
 	return nil
 }
