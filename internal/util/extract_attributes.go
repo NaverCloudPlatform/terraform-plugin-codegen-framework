@@ -3,11 +3,12 @@ package util
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"os"
 
-	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/spec"
+	"github.com/hashicorp/terraform-plugin-codegen-spec/datasource"
+	"github.com/hashicorp/terraform-plugin-codegen-spec/provider"
+	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
 )
 
 type RequestTypeWithMethodAndPath struct {
@@ -41,18 +42,37 @@ type RequestWithResponse struct {
 	Requests []spec.Request
 }
 
-type CodeSpec struct {
-	Provider    map[string]interface{}         `json:"provider"`
-	Resources   []Resource                     `json:"resources"`
-	DataSources []Resource                     `json:"datasources"`
-	Requests    []RequestWithRefreshObjectName `json:"requests"`
-	Version     string                         `json:"version"`
+type NcloudProvider struct {
+	provider.Provider
+	Endpoint string `json:"endpoint,omitempty"`
 }
 
+type NcloudSpecification struct {
+	spec.Specification
+	Provider    *NcloudProvider                `json:"provider"`
+	Requests    []RequestWithRefreshObjectName `json:"requests"`
+	Resources   []Resource                     `json:"resources"`
+	DataSources []DataSource                   `json:"datasources"`
+}
+
+// type CodeSpec struct {
+// 	Provider    map[string]interface{}         `json:"provider"`
+// 	Resources   []Resource                     `json:"resources"`
+// 	DataSources []Resource                     `json:"datasources"`
+// 	Requests    []RequestWithRefreshObjectName `json:"requests"`
+// 	Version     string                         `json:"version"`
+// }
+
 type Resource struct {
-	Name                string `json:"name"`
-	Schema              Schema `json:"schema"`
-	RefreshObjectName   string `json:"dto_name"`
+	resource.Resource
+	RefreshObjectName   string `json:"refresh_object_name"`
+	ImportStateOverride string `json:"import_state_override"`
+	Id                  string `json:"id"`
+}
+
+type DataSource struct {
+	datasource.DataSource
+	RefreshObjectName   string `json:"refresh_object_name"`
 	ImportStateOverride string `json:"import_state_override"`
 	Id                  string `json:"id"`
 }
@@ -93,7 +113,7 @@ type NestedObjectType struct {
 	Attributes []resource.Attribute `json:"attributes"`
 }
 
-func ExtractAttribute(file string) *CodeSpec {
+func ExtractAttribute(file string) *NcloudSpecification {
 	jsonFile, err := os.Open(file)
 	if err != nil {
 		return nil
@@ -105,41 +125,10 @@ func ExtractAttribute(file string) *CodeSpec {
 		return nil
 	}
 
-	var result CodeSpec
+	var result NcloudSpecification
 	if err := json.Unmarshal(byteValue, &result); err != nil {
 		return nil
 	}
 
 	return &result
-}
-
-func ExtractRequest(file, resourceName string) RequestWithRefreshObjectName {
-
-	jsonFile, err := os.Open(file)
-	if err != nil {
-		log.Fatalf("Failed to open JSON req file: %v", err)
-	}
-	defer jsonFile.Close()
-
-	byteValue, err := io.ReadAll(jsonFile)
-	if err != nil {
-		log.Fatalf("Failed to read JSON file: %v", err)
-	}
-
-	var result CodeSpec
-	if err := json.Unmarshal(byteValue, &result); err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %v", err)
-	}
-
-	if len(result.Requests) == 0 {
-		log.Fatalf("No requests found in the JSON file")
-	}
-
-	for _, val := range result.Requests {
-		if val.Name == resourceName {
-			return val
-		}
-	}
-
-	return result.Requests[0]
 }

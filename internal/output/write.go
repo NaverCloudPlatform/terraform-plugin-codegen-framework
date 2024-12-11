@@ -18,7 +18,7 @@ import (
 // If packageName is an empty string, this indicates that the flag was not set, and the default behaviour is
 // then to create a package and directory per data source. If packageName is set then all generated code is
 // placed into the same directory and package.
-func WriteDataSources(dataSourcesSchema, dataSourcesModels, customTypeValue, dataSourcesToFrom map[string][]byte, outputDir, packageName string) error {
+func WriteDataSources(dataSourcesSchema map[string][]byte, spec util.NcloudSpecification, outputDir, packageName string) error {
 	for k, v := range dataSourcesSchema {
 		dirName := ""
 
@@ -33,10 +33,7 @@ func WriteDataSources(dataSourcesSchema, dataSourcesModels, customTypeValue, dat
 
 		filename := fmt.Sprintf("%s_data_source_gen.go", k)
 
-		configPath := util.MustAbs("./internal/generator_config_apigw.yml")
-		codeSpecPath := util.MustAbs("./internal/example-code-spec.json")
-
-		n := ncloud.New(configPath, codeSpecPath, k)
+		n := ncloud.New(spec, k)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -87,7 +84,7 @@ func WriteDataSources(dataSourcesSchema, dataSourcesModels, customTypeValue, dat
 // then to create a package and directory per resource. If packageName is set then all generated code is
 // placed into the same directory and package.
 // CORE - 여기에 줄을 추가하여 생성하는 것으로 한다.
-func WriteResources(resourcesSchema, resourcesModels, customTypeValue, resourcesToFrom map[string][]byte, outputDir, packageName string) error {
+func WriteResources(resourcesSchema map[string][]byte, spec util.NcloudSpecification, outputDir, packageName string) error {
 	for k, v := range resourcesSchema {
 		dirName := ""
 
@@ -102,12 +99,7 @@ func WriteResources(resourcesSchema, resourcesModels, customTypeValue, resources
 
 		filename := fmt.Sprintf("%s_resource_gen.go", k)
 
-		configPath := util.MustAbs("./internal/generator_config_apigw.yml")
-		codeSpecPath := util.MustAbs("./internal/example-code-spec.json")
-
-		// 추후 다중 자원 생성을 진행할 때 이곳에서 반복문을 수행해야하므로 resourceName을 이곳에서 선언한다.
-
-		n := ncloud.New(configPath, codeSpecPath, k)
+		n := ncloud.New(spec, k)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -178,7 +170,7 @@ func WriteResources(resourcesSchema, resourcesModels, customTypeValue, resources
 // then to create a package and directory per resource. If packageName is set then all generated code is
 // placed into the same directory and package.
 // CORE - 여기에 줄을 추가하여 생성하는 것으로 한다.
-func WriteResourceTests(resourcesSchema, resourcesModels, customTypeValue, resourcesToFrom map[string][]byte, outputDir, packageName string) error {
+func WriteResourceTests(resourcesSchema map[string][]byte, spec util.NcloudSpecification, outputDir, packageName string) error {
 	for k := range resourcesSchema {
 		dirName := ""
 
@@ -193,12 +185,7 @@ func WriteResourceTests(resourcesSchema, resourcesModels, customTypeValue, resou
 
 		filename := fmt.Sprintf("%s_resource_gen_test.go", k)
 
-		configPath := util.MustAbs("./internal/generator_config_apigw.yml")
-		codeSpecPath := util.MustAbs("./internal/example-code-spec.json")
-
-		// 추후 다중 자원 생성을 진행할 때 이곳에서 반복문을 수행해야하므로 resourceName을 이곳에서 선언한다.
-
-		n := ncloud.New(configPath, codeSpecPath, k)
+		n := ncloud.New(spec, k)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -223,7 +210,7 @@ func WriteResourceTests(resourcesSchema, resourcesModels, customTypeValue, resou
 // If packageName is an empty string, this indicates that the flag was not set, and the default behaviour is
 // then to create a package and directory per data source. If packageName is set then all generated code is
 // placed into the same directory and package.
-func WriteDataSourceTests(dataSourcesSchema, dataSourcesModels, customTypeValue, dataSourcesToFrom map[string][]byte, outputDir, packageName string) error {
+func WriteDataSourceTests(dataSourcesSchema map[string][]byte, spec util.NcloudSpecification, outputDir, packageName string) error {
 	for k := range dataSourcesSchema {
 		dirName := ""
 
@@ -238,10 +225,7 @@ func WriteDataSourceTests(dataSourcesSchema, dataSourcesModels, customTypeValue,
 
 		filename := fmt.Sprintf("%s_data_source_gen_test.go", k)
 
-		configPath := util.MustAbs("./internal/generator_config_apigw.yml")
-		codeSpecPath := util.MustAbs("./internal/example-code-spec.json")
-
-		n := ncloud.New(configPath, codeSpecPath, k)
+		n := ncloud.New(spec, k)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {

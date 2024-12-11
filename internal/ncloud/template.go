@@ -20,8 +20,7 @@ import (
 // RenderDelete(): Delete 함수를 생성한다.
 // 필요 데이터들을 초기화 시 계산하고, 각 메서드 별 렌더링을 수행한다..
 type Template struct {
-	configPath        string
-	codeSpecPath      string
+	spec              util.NcloudSpecification
 	providerName      string
 	resourceName      string
 	importStateLogic  string
@@ -334,30 +333,34 @@ func (t *Template) RenderTest() []byte {
 }
 
 // 초기화를 통해 필요한 데이터들을 미리 계산한다.
-func New(configPath, codeSpecPath, resourceName string) *Template {
+func New(spec util.NcloudSpecification, resourceName string) *Template {
 	var refreshObjectName string
 	var id string
 	var attributes resource.Attributes
 	var createReqBody string
 	var updateReqBody string
 	var importStateOverride string
+	var targetResourceRequest util.RequestWithRefreshObjectName
 
 	t := &Template{
-		configPath:   configPath,
-		codeSpecPath: codeSpecPath,
+		spec:         spec,
 		resourceName: resourceName,
 	}
 
 	funcMap := util.CreateFuncMap()
 
-	codeSpec := util.ExtractAttribute(codeSpecPath)
-
-	for _, resource := range codeSpec.Resources {
+	for _, resource := range spec.Resources {
 		if resource.Name == resourceName {
 			refreshObjectName = resource.RefreshObjectName
 			id = resource.Id
 			attributes = resource.Schema.Attributes
 			importStateOverride = resource.ImportStateOverride
+		}
+	}
+
+	for _, val := range spec.Requests {
+		if val.Name == resourceName {
+			targetResourceRequest = val
 		}
 	}
 
@@ -377,12 +380,12 @@ func New(configPath, codeSpecPath, resourceName string) *Template {
 	}
 
 	t.funcMap = funcMap
-	t.providerName = codeSpec.Provider["name"].(string)
+	t.providerName = spec.Provider.Name
 	t.refreshObjectName = refreshObjectName
 	t.importStateLogic = MakeImportStateLogic(importStateOverride)
 	t.model = model
 	t.refreshLogic = refreshLogic
-	t.endpoint = codeSpec.Provider["endpoint"].(string)
+	t.endpoint = spec.Provider.Endpoint
 	t.deletePathParams = extractPathParams(targetResourceRequest.Delete.Path)
 	t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
 	t.readPathParams = extractReadPathParams(targetResourceRequest.Read.Path)
