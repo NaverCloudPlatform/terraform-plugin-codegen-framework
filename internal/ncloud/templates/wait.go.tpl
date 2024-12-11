@@ -11,7 +11,7 @@ func waitResourceCreated(ctx context.Context, id string, plan {{.RefreshObjectNa
 		Pending: []string{"CREATING"},
 		Target:  []string{"CREATED"},
 		Refresh: func() (interface{}, string, error) {
-			response, err := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
+			response, err := util.MakeRequest("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
 			if err != nil {
 				return response, "CREATING", nil
 			}
@@ -37,7 +37,7 @@ func waitResourceDeleted(ctx context.Context, id string, plan {{.RefreshObjectNa
 		Pending: []string{"DELETING"},
 		Target:  []string{"DELETED"},
 		Refresh: func() (interface{}, string, error) {
-			response, _ := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
+			response, _ := util.MakeRequest("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
 			if response["error"] != nil {
 				return response, "DELETED", nil
 			}

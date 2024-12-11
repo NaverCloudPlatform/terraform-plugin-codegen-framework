@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
-	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
+	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
 )
 
 // To generate actual data, extract data from config.yml and code-spec.json, and render code for each receiver based on that data.
@@ -368,8 +368,6 @@ func New(spec util.NcloudSpecification, resourceName string) *Template {
 	if err != nil {
 		log.Fatalf("error occurred with Gen_ConvertOAStoTFTypes: %v", err)
 	}
-
-	targetResourceRequest := util.ExtractRequest(codeSpecPath, resourceName)
 
 	for _, val := range targetResourceRequest.Create.RequestBody.Required {
 		createReqBody = createReqBody + fmt.Sprintf(`"%[1]s": clearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"

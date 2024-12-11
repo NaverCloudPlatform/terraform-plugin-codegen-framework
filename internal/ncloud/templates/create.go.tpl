@@ -26,7 +26,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 
 	tflog.Info(ctx, "Create{{.ResourceName | ToPascalCase}} reqParams="+strings.Replace(string(reqBody), `\"`, "", -1))
 
-	response, err := util.MakeReqeust("{{.CreateMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .CreatePathParams}}{{.CreatePathParams}}{{end}}, strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := util.MakeRequest("{{.CreateMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .CreatePathParams}}{{.CreatePathParams}}{{end}}, strings.Replace(string(reqBody), `\"`, "", -1))
 	if err != nil {
 		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
 		return

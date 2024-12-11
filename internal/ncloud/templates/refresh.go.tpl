@@ -31,7 +31,7 @@ func diagOff[V, T interface{}](input func(ctx context.Context, elementType T, el
 }
 
 func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(diagnostics diag.Diagnostics, plan {{.RefreshObjectName | ToPascalCase}}Model, id string, rest ...interface{}) {
-	response, _ := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
+	response, _ := util.MakeRequest("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
 	if response == nil {
 		diagnostics.AddError("UPDATING ERROR", "response invalid")
 		return

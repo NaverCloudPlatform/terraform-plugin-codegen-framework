@@ -26,7 +26,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, re
 
 	tflog.Info(ctx, "Update{{.ResourceName | ToPascalCase}} reqParams="+strings.Replace(string(reqBody), `\"`, "", -1))
 
-	response, err := util.MakeReqeust("{{.UpdateMethod}}",  "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .UpdatePathParams}}{{.UpdatePathParams}}{{end}}, strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := util.MakeRequest("{{.UpdateMethod}}",  "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .UpdatePathParams}}{{.UpdatePathParams}}{{end}}, strings.Replace(string(reqBody), `\"`, "", -1))
 	if err != nil {
 		resp.Diagnostics.AddError("UPDATING ERROR", err.Error())
 		return

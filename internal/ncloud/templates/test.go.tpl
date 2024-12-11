@@ -8,7 +8,7 @@
 // Endpoint string
 // ReadPathParams string, optional
 
-package objectstorage_test
+package {{.ResourceName}}_test
 
 import (
 	"context"
@@ -17,7 +17,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/NaverCloudPlatform/ncloud-sdk-go-v2/ncloud"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -59,7 +58,7 @@ func testAccCheck{{.ResourceName | ToLowerCase}}Exists(n string, provider *schem
 			return fmt.Errorf("no ID is set")
 		}
 
-        response, err := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(resource.Primary.ID){{end}}, "")
+        response, err := util.MakeRequest("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(resource.Primary.ID){{end}}, "")
         if response == nil {
             return err
         }
@@ -77,7 +76,7 @@ func testAccCheck{{.ResourceName | ToPascalCase}}Destroy(s *terraform.State) err
 			continue
 		}
 
-        response, _ := util.MakeReqeust("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(rs.Primary.ID){{end}}, "")
+        response, _ := util.MakeRequest("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(rs.Primary.ID){{end}}, "")
         if response["error"] != nil {
             return nil
         }

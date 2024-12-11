@@ -173,7 +173,7 @@ func ClearDoubleQuote(s string) string {
 	return strings.Replace(strings.Replace(strings.Replace(s, "\\", "", -1), "\"", "", -1), `"`, "", -1)
 }
 
-func MakeReqeust(method, path, endpoint, reqBody string) (map[string]interface{}, error) {
+func MakeRequest(method, path, endpoint, reqBody string) (map[string]interface{}, error) {
 	access_key := os.Getenv("NCLOUD_ACCESS_KEY")
 	secret_key := os.Getenv("NCLOUD_SECRET_KEY")
 	timestamp := fmt.Sprintf("%d", time.Now().UnixMilli())

@@ -6,7 +6,7 @@ import (
 	"unicode"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
-	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
+	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
 )
 
 // generate converter that convert openapi.json schema to terraform type

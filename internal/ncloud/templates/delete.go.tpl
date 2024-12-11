@@ -14,7 +14,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Delete(ctx context.Context, re
 		return
 	}
 
-	_, err := util.MakeReqeust("{{.DeleteMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{.DeletePathParams}}, "")
+	_, err := util.MakeRequest("{{.DeleteMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{.DeletePathParams}}, "")
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return
