@@ -11,14 +11,14 @@ import (
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
 )
 
-// 실제 데이터를 생성하기 위하여 config.yml과 code-spec.json에서 데이터를 추출하고, 해당 데이터를 기반으로 리시버 별로 코드를 렌더링.
-// New(): 코드 생성에 필요한 데이터들을 추출합니다. 현재는 config.yml과 code-spec.json에서 데이터를 추출하지만 추후 code-spec.json으로 전부 통일 예정.
-// RenderInitial(): 초기에 필요한 작은 코드 블록들을 생성한다.
-// RenderCreate(): Create 함수를 생성한다.
-// RenderRead()): Read 함수를 생성한다.
-// RenderUpdate(): Update 함수를 생성한다.
-// RenderDelete(): Delete 함수를 생성한다.
-// 필요 데이터들을 초기화 시 계산하고, 각 메서드 별 렌더링을 수행한다..
+// To generate actual data, extract data from config.yml and code-spec.json, and render code for each receiver based on that data.
+// New(): Extracts the data needed for code generation. Currently, it extracts data from config.yml and code-spec.json, but it is planned to unify everything into code-spec.json in the future.
+// RenderInitial(): Generates small code blocks needed initially.
+// RenderCreate(): Generates the Create function.
+// RenderRead(): Generates the Read function.
+// RenderUpdate(): Generates the Update function.
+// RenderDelete(): Generates the Delete function.
+// Calculates the necessary data during initialization and performs rendering for each method.
 type Template struct {
 	spec              util.NcloudSpecification
 	providerName      string
