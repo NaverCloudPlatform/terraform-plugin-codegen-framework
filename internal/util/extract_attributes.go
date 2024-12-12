@@ -1,10 +1,6 @@
 package util
 
 import (
-	"encoding/json"
-	"io"
-	"os"
-
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/spec"
 	"github.com/hashicorp/terraform-plugin-codegen-spec/datasource"
 	"github.com/hashicorp/terraform-plugin-codegen-spec/provider"
@@ -55,14 +51,6 @@ type NcloudSpecification struct {
 	DataSources []DataSource                   `json:"datasources"`
 }
 
-// type CodeSpec struct {
-// 	Provider    map[string]interface{}         `json:"provider"`
-// 	Resources   []Resource                     `json:"resources"`
-// 	DataSources []Resource                     `json:"datasources"`
-// 	Requests    []RequestWithRefreshObjectName `json:"requests"`
-// 	Version     string                         `json:"version"`
-// }
-
 type Resource struct {
 	resource.Resource
 	RefreshObjectName   string `json:"refresh_object_name"`
@@ -111,24 +99,4 @@ type ListNestedAttributeType struct {
 
 type NestedObjectType struct {
 	Attributes []resource.Attribute `json:"attributes"`
-}
-
-func ExtractAttribute(file string) *NcloudSpecification {
-	jsonFile, err := os.Open(file)
-	if err != nil {
-		return nil
-	}
-	defer jsonFile.Close()
-
-	byteValue, err := io.ReadAll(jsonFile)
-	if err != nil {
-		return nil
-	}
-
-	var result NcloudSpecification
-	if err := json.Unmarshal(byteValue, &result); err != nil {
-		return nil
-	}
-
-	return &result
 }
