@@ -38,6 +38,12 @@ type Template struct {
 	createMethod      string
 	createReqBody     string
 	updateReqBody     string
+	readReqBody       string
+	deleteReqBody     string
+	createMethodName  string
+	readMethodName    string
+	updateMethodName  string
+	deleteMethodName  string
 	idGetter          string
 	funcMap           template.FuncMap
 }
@@ -103,6 +109,7 @@ func (t *Template) RenderCreate() []byte {
 		RefreshObjectName string
 		CreateReqBody     string
 		CreateMethod      string
+		CreateMethodName  string
 		Endpoint          string
 		CreatePathParams  string
 		IdGetter          string
@@ -111,6 +118,7 @@ func (t *Template) RenderCreate() []byte {
 		RefreshObjectName: t.refreshObjectName,
 		CreateReqBody:     t.createReqBody,
 		CreateMethod:      t.createMethod,
+		CreateMethodName:  t.createMethodName,
 		Endpoint:          t.endpoint,
 		CreatePathParams:  t.createPathParams,
 		IdGetter:          t.idGetter,
@@ -135,11 +143,9 @@ func (t *Template) RenderRead() []byte {
 	data := struct {
 		ResourceName      string
 		RefreshObjectName string
-		ReadPathParams    string
 	}{
 		ResourceName:      t.resourceName,
 		RefreshObjectName: t.refreshObjectName,
-		ReadPathParams:    t.readPathParams,
 	}
 
 	err = readTemplate.ExecuteTemplate(&b, "Read", data)
@@ -163,6 +169,7 @@ func (t *Template) RenderUpdate() []byte {
 		RefreshObjectName string
 		UpdateReqBody     string
 		UpdateMethod      string
+		UpdateMethodName  string
 		Endpoint          string
 		UpdatePathParams  string
 		ReadPathParams    string
@@ -171,6 +178,7 @@ func (t *Template) RenderUpdate() []byte {
 		RefreshObjectName: t.refreshObjectName,
 		UpdateReqBody:     t.updateReqBody,
 		UpdateMethod:      t.updateMethod,
+		UpdateMethodName:  t.updateMethodName,
 		Endpoint:          t.endpoint,
 		UpdatePathParams:  t.updatePathParams,
 		ReadPathParams:    t.readPathParams,
@@ -196,6 +204,8 @@ func (t *Template) RenderDelete() []byte {
 		ResourceName      string
 		RefreshObjectName string
 		DeleteMethod      string
+		DeleteReqBody     string
+		DeleteMethodName  string
 		Endpoint          string
 		DeletePathParams  string
 		IdGetter          string
@@ -203,6 +213,8 @@ func (t *Template) RenderDelete() []byte {
 		ResourceName:      t.resourceName,
 		RefreshObjectName: t.refreshObjectName,
 		DeleteMethod:      t.deleteMethod,
+		DeleteReqBody:     t.deleteReqBody,
+		DeleteMethodName:  t.deleteMethodName,
 		Endpoint:          t.endpoint,
 		DeletePathParams:  t.deletePathParams,
 		IdGetter:          t.idGetter,
@@ -282,14 +294,18 @@ func (t *Template) RenderWait() []byte {
 
 	data := struct {
 		ReadMethod        string
+		ReadMethodName    string
 		Endpoint          string
 		ReadPathParams    string
 		RefreshObjectName string
+		ReadReqBody       string
 	}{
 		ReadMethod:        t.readMethod,
+		ReadMethodName:    t.readMethodName,
 		Endpoint:          t.endpoint,
 		ReadPathParams:    t.readPathParams,
 		RefreshObjectName: t.refreshObjectName,
+		ReadReqBody:       t.readReqBody,
 	}
 
 	err = waitTemplate.ExecuteTemplate(&b, "Wait", data)
@@ -339,6 +355,8 @@ func New(spec util.NcloudSpecification, resourceName string) *Template {
 	var attributes resource.Attributes
 	var createReqBody string
 	var updateReqBody string
+	var readReqBody string
+	var deleteReqBody string
 	var importStateOverride string
 	var targetResourceRequest util.RequestWithRefreshObjectName
 
@@ -370,11 +388,27 @@ func New(spec util.NcloudSpecification, resourceName string) *Template {
 	}
 
 	for _, val := range targetResourceRequest.Create.RequestBody.Required {
-		createReqBody = createReqBody + fmt.Sprintf(`"%[1]s": clearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
+		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val), util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
 
 	for _, val := range targetResourceRequest.Update[0].RequestBody.Required {
-		updateReqBody = updateReqBody + fmt.Sprintf(`"%[1]s": clearDoubleQuote(plan.%[2]s.String()),`, val, util.FirstAlphabetToUpperCase(val)) + "\n"
+		updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val), util.FirstAlphabetToUpperCase(val)) + "\n"
+	}
+
+	for _, val := range targetResourceRequest.Read.Parameters {
+		readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+	}
+
+	for _, val := range targetResourceRequest.Create.Parameters {
+		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+	}
+
+	for _, val := range targetResourceRequest.Update[0].Parameters {
+		updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+	}
+
+	for _, val := range targetResourceRequest.Delete.Parameters {
+		deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
 	}
 
 	t.funcMap = funcMap
@@ -394,9 +428,38 @@ func New(spec util.NcloudSpecification, resourceName string) *Template {
 	t.createMethod = targetResourceRequest.Create.Method
 	t.createReqBody = createReqBody
 	t.updateReqBody = updateReqBody
+	t.readReqBody = readReqBody
+	t.deleteReqBody = deleteReqBody
+	t.createMethodName = strings.ToUpper(targetResourceRequest.Create.Method) + getMethodName(targetResourceRequest.Create.Path)
+	t.readMethodName = strings.ToUpper(targetResourceRequest.Read.Method) + getMethodName(targetResourceRequest.Read.Path)
+	t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
+	t.deleteMethodName = strings.ToUpper(targetResourceRequest.Delete.Method) + getMethodName(targetResourceRequest.Delete.Path)
 	t.idGetter = makeIdGetter(id)
 
 	return t
+}
+
+func getMethodName(s string) string {
+	parts := strings.Split(s, "/")
+	var result []string
+
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+
+		// Remove curly braces if present
+		part = strings.TrimPrefix(part, "{")
+		part = strings.TrimSuffix(part, "}")
+
+		// Remove hyphens and convert to uppercase
+		part = strings.ReplaceAll(part, "-", "")
+		part = util.FirstAlphabetToUpperCase(part)
+
+		result = append(result, part)
+	}
+
+	return strings.Join(result, "")
 }
 
 func extractPathParams(path string) string {
@@ -418,9 +481,9 @@ func extractPathParams(path string) string {
 			s = s + fmt.Sprintf(`"%s"`, val)
 		} else {
 			if idx == len(parts)-1 {
-				s = s + `clearDoubleQuote(plan.ID.String())`
+				s = s + `plan.ID.ValueString()`
 			} else {
-				s = s + fmt.Sprintf(`clearDoubleQuote(plan.%s.String())`, util.PathToPascal(val))
+				s = s + fmt.Sprintf(`plan.%s.ValueString())`, util.PathToPascal(val))
 			}
 		}
 	}
@@ -449,7 +512,7 @@ func extractReadPathParams(path string) string {
 		if start == -1 {
 			s = s + fmt.Sprintf(`"%s"`, val)
 		} else {
-			s = s + fmt.Sprintf(`clearDoubleQuote(plan.%s.String())`, util.PathToPascal(val))
+			s = s + fmt.Sprintf(`plan.%s.ValueString()`, util.PathToPascal(val))
 		}
 	}
 

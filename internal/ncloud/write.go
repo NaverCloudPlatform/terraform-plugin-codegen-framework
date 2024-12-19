@@ -73,11 +73,6 @@ func WriteNcloudResources(resourcesSchema map[string][]byte, spec util.NcloudSpe
 			return err
 		}
 
-		_, err = f.Write(n.RenderRefresh())
-		if err != nil {
-			return err
-		}
-
 		_, err = f.Write(n.RenderWait())
 		if err != nil {
 			return err

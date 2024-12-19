@@ -4,7 +4,7 @@
 // ResourceName string
 // RefreshObjectName string
 // CreateReqBody string
-// CreateMethod string
+// CreateMethodName string
 // Endpoint string
 // CreatePathParams string, optional
 
@@ -16,37 +16,28 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 		return
 	}
 
-	reqBody, err := json.Marshal(map[string]string{
+	c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
+
+	reqParams := &ncloudsdk.{{.CreateMethodName}}Request{
 		{{.CreateReqBody}}
-	})
-	if err != nil {
-		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
-		return
 	}
+	
+	tflog.Info(ctx, "Create{{.ResourceName | ToPascalCase}} reqParams="+common.MarshalUncheckedString(reqParams))
 
-	tflog.Info(ctx, "Create{{.ResourceName | ToPascalCase}} reqParams="+strings.Replace(string(reqBody), `\"`, "", -1))
-
-	response, err := util.MakeRequest("{{.CreateMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .CreatePathParams}}{{.CreatePathParams}}{{end}}, strings.Replace(string(reqBody), `\"`, "", -1))
+	response, err := c.{{.CreateMethodName}}_TF(reqParams)
 	if err != nil {
-		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
-		return
-	}
-	if response == nil {
-		resp.Diagnostics.AddError("CREATING ERROR", "response invalid")
-		return
-	}
-
-	err = waitResourceCreated(ctx, {{.IdGetter}}, plan)
-	if err != nil {
-		resp.Diagnostics.AddError("CREATING ERROR", err.Error())
+		resp.Diagnostics.AddError("Error with {{.CreateMethodName}}_TF", err.Error())
 		return
 	}
 
 	tflog.Info(ctx, "Create{{.ResourceName | ToPascalCase}} response="+common.MarshalUncheckedString(response))
 
-	plan.refreshFromOutput(resp.Diagnostics, plan, {{.IdGetter}})
+	plan.refreshFromOutput_createOp(ctx, &resp.Diagnostics, response)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 {{ end }}
