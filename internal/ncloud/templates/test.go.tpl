@@ -8,7 +8,7 @@
 // Endpoint string
 // ReadPathParams string, optional
 
-package {{.ResourceName}}_test
+package {{.PackageName}}_test
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
