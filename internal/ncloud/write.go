@@ -117,7 +117,7 @@ func WriteNcloudDataSources(dataSourcesSchema map[string][]byte, spec util.Nclou
 			return err
 		}
 
-		// CORE - 이곳에 코드를 추가한다.
+		// --- NCLOUD Logic ---
 		_, err = f.Write(n.RenderInitial())
 		if err != nil {
 			return err
