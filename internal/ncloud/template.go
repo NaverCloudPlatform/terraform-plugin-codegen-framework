@@ -23,6 +23,7 @@ type Template struct {
 	spec              util.NcloudSpecification
 	providerName      string
 	resourceName      string
+	packageName       string
 	importStateLogic  string
 	refreshObjectName string
 	model             string
@@ -327,6 +328,7 @@ func (t *Template) RenderTest() []byte {
 	data := struct {
 		ProviderName      string
 		ResourceName      string
+		PackageName       string
 		RefreshObjectName string
 		ReadMethod        string
 		Endpoint          string
@@ -334,6 +336,7 @@ func (t *Template) RenderTest() []byte {
 	}{
 		ProviderName:      t.providerName,
 		ResourceName:      t.resourceName,
+		PackageName:       t.packageName,
 		RefreshObjectName: t.refreshObjectName,
 		ReadMethod:        t.readMethod,
 		Endpoint:          t.endpoint,
@@ -349,7 +352,7 @@ func (t *Template) RenderTest() []byte {
 }
 
 // 초기화를 통해 필요한 데이터들을 미리 계산한다.
-func New(spec util.NcloudSpecification, resourceName string) *Template {
+func New(spec util.NcloudSpecification, resourceName, packageName string) *Template {
 	var refreshObjectName string
 	var id string
 	var attributes resource.Attributes
@@ -413,6 +416,7 @@ func New(spec util.NcloudSpecification, resourceName string) *Template {
 
 	t.funcMap = funcMap
 	t.providerName = spec.Provider.Name
+	t.packageName = packageName
 	t.refreshObjectName = refreshObjectName
 	t.importStateLogic = MakeImportStateLogic(importStateOverride)
 	t.model = model

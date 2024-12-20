@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-codegen-spec/spec"
 )
 
-func WriteNcloudResources(resourcesSchema map[string][]byte, spec util.NcloudSpecification, outputDir, packageName string) error {
+func WriteNcloudResources(resourcesSchema map[string][]byte, spec util.NcloudSpecification, outputDir, packageName string, genRefresh bool) error {
 	for k, v := range resourcesSchema {
 		dirName := ""
 
@@ -26,7 +26,7 @@ func WriteNcloudResources(resourcesSchema map[string][]byte, spec util.NcloudSpe
 
 		filename := fmt.Sprintf("%s.go", k)
 
-		n := New(spec, k)
+		n := New(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -105,7 +105,7 @@ func WriteNcloudDataSources(dataSourcesSchema map[string][]byte, spec util.Nclou
 
 		filename := fmt.Sprintf("%s_data_source_gen.go", k)
 
-		n := New(spec, k)
+		n := New(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -170,7 +170,7 @@ func WriteNcloudDataSourceTests(dataSourcesSchema map[string][]byte, spec util.N
 
 		filename := fmt.Sprintf("%s_data_source_test.go", k)
 
-		n := New(spec, k)
+		n := New(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -194,7 +194,6 @@ func WriteNcloudDataSourceTests(dataSourcesSchema map[string][]byte, spec util.N
 // If packageName is an empty string, this indicates that the flag was not set, and the default behaviour is
 // then to create a package and directory per resource. If packageName is set then all generated code is
 // placed into the same directory and package.
-// CORE - 여기에 줄을 추가하여 생성하는 것으로 한다.
 func WriteNcloudResourceTests(resourcesSchema map[string][]byte, spec util.NcloudSpecification, outputDir, packageName string) error {
 	for k := range resourcesSchema {
 		dirName := ""
@@ -210,7 +209,7 @@ func WriteNcloudResourceTests(resourcesSchema map[string][]byte, spec util.Nclou
 
 		filename := fmt.Sprintf("%s_test.go", k)
 
-		n := New(spec, k)
+		n := New(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
