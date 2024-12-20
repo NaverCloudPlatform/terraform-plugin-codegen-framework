@@ -261,19 +261,19 @@ func (t *Template) RenderRefresh() []byte {
 	}
 
 	data := struct {
-		ResourceName      string
+		PackageName       string
 		RefreshObjectName string
-		RefreshLogic      string
-		ReadMethod        string
 		Endpoint          string
-		ReadPathParams    string
+		CreateMethodName  string
+		ReadMethodName    string
+		ReadReqBody       string
 	}{
-		ResourceName:      t.resourceName,
+		PackageName:       t.packageName,
 		RefreshObjectName: t.refreshObjectName,
-		RefreshLogic:      t.refreshLogic,
-		ReadMethod:        t.readMethod,
 		Endpoint:          t.endpoint,
-		ReadPathParams:    t.readPathParams,
+		CreateMethodName:  t.createMethodName,
+		ReadMethodName:    t.readMethodName,
+		ReadReqBody:       t.readReqBody,
 	}
 
 	err = refreshTemplate.ExecuteTemplate(&b, "Refresh", data)

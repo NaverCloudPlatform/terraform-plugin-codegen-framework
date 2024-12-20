@@ -28,6 +28,7 @@ type GenerateResourcesCommand struct {
 	flagIRInputPath string
 	flagOutputPath  string
 	flagPackageName string
+	flagGenRefresh  bool
 }
 
 func (cmd *GenerateResourcesCommand) Flags() *flag.FlagSet {
@@ -35,6 +36,7 @@ func (cmd *GenerateResourcesCommand) Flags() *flag.FlagSet {
 	fs.StringVar(&cmd.flagIRInputPath, "input", "./ir.json", "path to intermediate representation (JSON)")
 	fs.StringVar(&cmd.flagOutputPath, "output", "./output", "directory path to output generated code files")
 	fs.StringVar(&cmd.flagPackageName, "package", "", "name of Go package for generated code files")
+	fs.BoolVar(&cmd.flagGenRefresh, "gen_refresh", false, "whether render new refresh files or not")
 
 	return fs
 }
@@ -123,7 +125,7 @@ func (cmd *GenerateResourcesCommand) runInternal(ctx context.Context, logger *sl
 		return fmt.Errorf("error parsing IR JSON: %w", err)
 	}
 
-	err = generateResourceCode(ctx, spec, cmd.flagOutputPath, cmd.flagPackageName, "Resource", logger)
+	err = generateResourceCode(ctx, spec, cmd.flagOutputPath, cmd.flagPackageName, "Resource", cmd.flagGenRefresh, logger)
 	if err != nil {
 		return fmt.Errorf("error generating resource code: %w", err)
 	}
@@ -131,7 +133,7 @@ func (cmd *GenerateResourcesCommand) runInternal(ctx context.Context, logger *sl
 	return nil
 }
 
-func generateResourceCode(ctx context.Context, spec util.NcloudSpecification, outputPath, packageName, generatorType string, logger *slog.Logger) error {
+func generateResourceCode(ctx context.Context, spec util.NcloudSpecification, outputPath, packageName, generatorType string, genRefresh bool, logger *slog.Logger) error {
 	ctx = logging.SetPathInContext(ctx, "resource")
 
 	// convert IR to framework schema
@@ -198,7 +200,7 @@ func generateResourceCode(ctx context.Context, spec util.NcloudSpecification, ou
 	// --- NCLOUD Logic ---
 
 	// write code
-	err = ncloud.WriteNcloudResources(formattedSchemas, spec, outputPath, packageName)
+	err = ncloud.WriteNcloudResources(formattedSchemas, spec, outputPath, packageName, genRefresh)
 	if err != nil {
 		return fmt.Errorf("error writing Go code to output: %w", err)
 	}
@@ -206,6 +208,14 @@ func generateResourceCode(ctx context.Context, spec util.NcloudSpecification, ou
 	err = ncloud.WriteNcloudResourceTests(formattedSchemas, spec, outputPath, packageName)
 	if err != nil {
 		return fmt.Errorf("error writing Go code to output: %w", err)
+	}
+
+	// Render refresh file conditionally
+	if genRefresh {
+		err = ncloud.WriteNcloudResourceRefresh(formattedSchemas, spec, outputPath, packageName)
+		if err != nil {
+			return fmt.Errorf("error writing Go code to output: %w", err)
+		}
 	}
 
 	return nil

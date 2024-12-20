@@ -230,6 +230,41 @@ func WriteNcloudResourceTests(resourcesSchema map[string][]byte, spec util.Nclou
 	return nil
 }
 
+func WriteNcloudResourceRefresh(resourcesSchema map[string][]byte, spec util.NcloudSpecification, outputDir, packageName string) error {
+	for k := range resourcesSchema {
+		dirName := ""
+
+		if packageName == "" {
+			dirName = k
+
+			err := os.MkdirAll(filepath.Join(outputDir, dirName), os.ModePerm)
+			if err != nil {
+				return err
+			}
+		}
+
+		filename := fmt.Sprintf("%s_refresh.go", k)
+
+		n := New(spec, k, packageName)
+
+		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
+		if err != nil {
+			return err
+		}
+
+		_, err = f.Write(n.RenderRefresh())
+		if err != nil {
+			return err
+		}
+
+		filePath := f.Name()
+
+		util.RemoveDuplicates(filePath)
+	}
+
+	return nil
+}
+
 // Parse returns a Specification from the JSON document contents, or any validation errors.
 func NcloudParse(ctx context.Context, document []byte) (util.NcloudSpecification, error) {
 	if err := spec.Validate(ctx, document); err != nil {
