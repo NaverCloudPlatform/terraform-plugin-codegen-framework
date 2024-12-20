@@ -28,6 +28,7 @@ type GenerateResourcesCommand struct {
 	flagIRInputPath string
 	flagOutputPath  string
 	flagPackageName string
+	flagGenRefresh  bool
 }
 
 func (cmd *GenerateResourcesCommand) Flags() *flag.FlagSet {
@@ -35,6 +36,7 @@ func (cmd *GenerateResourcesCommand) Flags() *flag.FlagSet {
 	fs.StringVar(&cmd.flagIRInputPath, "input", "./ir.json", "path to intermediate representation (JSON)")
 	fs.StringVar(&cmd.flagOutputPath, "output", "./output", "directory path to output generated code files")
 	fs.StringVar(&cmd.flagPackageName, "package", "", "name of Go package for generated code files")
+	fs.BoolVar(&cmd.flagGenRefresh, "gen_refresh", false, "whether render new refresh files or not")
 
 	return fs
 }
@@ -123,7 +125,7 @@ func (cmd *GenerateResourcesCommand) runInternal(ctx context.Context, logger *sl
 		return fmt.Errorf("error parsing IR JSON: %w", err)
 	}
 
-	err = generateResourceCode(ctx, spec, cmd.flagOutputPath, cmd.flagPackageName, "Resource", logger)
+	err = generateResourceCode(ctx, spec, cmd.flagOutputPath, cmd.flagPackageName, "Resource", cmd.flagGenRefresh, logger)
 	if err != nil {
 		return fmt.Errorf("error generating resource code: %w", err)
 	}
@@ -131,7 +133,7 @@ func (cmd *GenerateResourcesCommand) runInternal(ctx context.Context, logger *sl
 	return nil
 }
 
-func generateResourceCode(ctx context.Context, spec util.NcloudSpecification, outputPath, packageName, generatorType string, logger *slog.Logger) error {
+func generateResourceCode(ctx context.Context, spec util.NcloudSpecification, outputPath, packageName, generatorType string, genRefresh bool, logger *slog.Logger) error {
 	ctx = logging.SetPathInContext(ctx, "resource")
 
 	// convert IR to framework schema
@@ -147,58 +149,16 @@ func generateResourceCode(ctx context.Context, spec util.NcloudSpecification, ou
 		return fmt.Errorf("error converting Plugin Framework schema to Go code: %w", err)
 	}
 
-	// generate model code
-	// models, err := g.Models()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // generate custom type and value types code
-	// customTypeValue, err := g.CustomTypeValue()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // generate "expand" and "flatten" code
-	// toFromFunctions, err := g.ToFromFunctions(ctx, logger)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	// format schema code
 	formattedSchemas, err := format.Format(schemas)
 	if err != nil {
 		return fmt.Errorf("error formatting Go code: %w", err)
 	}
 
-	// format model code
-	// formattedModels, err := format.Format(models)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // format custom type and value types code
-	// formattedCustomTypeValue, err := format.Format(customTypeValue)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // format "expand" and "flatten" code
-	// formattedToFromFunctions, err := format.Format(toFromFunctions)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// hashicorp's logic, commented
-	// err = output.WriteResources(formattedSchemas, formattedModels, formattedCustomTypeValue, formattedToFromFunctions, outputPath, packageName)
-	// if err != nil {
-	// 	return fmt.Errorf("error writing Go code to output: %w", err)
-	// }
-
 	// --- NCLOUD Logic ---
 
 	// write code
-	err = ncloud.WriteNcloudResources(formattedSchemas, spec, outputPath, packageName)
+	err = ncloud.WriteNcloudResources(formattedSchemas, spec, outputPath, packageName, genRefresh)
 	if err != nil {
 		return fmt.Errorf("error writing Go code to output: %w", err)
 	}
@@ -206,6 +166,14 @@ func generateResourceCode(ctx context.Context, spec util.NcloudSpecification, ou
 	err = ncloud.WriteNcloudResourceTests(formattedSchemas, spec, outputPath, packageName)
 	if err != nil {
 		return fmt.Errorf("error writing Go code to output: %w", err)
+	}
+
+	// Render refresh file conditionally
+	if genRefresh {
+		err = ncloud.WriteNcloudResourceRefresh(formattedSchemas, spec, outputPath, packageName)
+		if err != nil {
+			return fmt.Errorf("error writing Go code to output: %w", err)
+		}
 	}
 
 	return nil

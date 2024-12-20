@@ -26,13 +26,13 @@ func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
 		} else if val.Bool != nil {
 			s = s + fmt.Sprintf(`
 			if data["%[2]s"] != nil {
-				dto.%[1]s = types.BoolValue(data["%[2]s"].(string))
+				dto.%[1]s = types.BoolValue(data["%[2]s"].(bool))
 			}`, util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.Bool `tfsdk:\"%[2]s\"`", util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		} else if val.Int64 != nil {
 			s = s + fmt.Sprintf(`
 			if data["%[2]s"] != nil {
-				dto.%[1]s = types.Int64Value(data["%[2]s"].(string))
+				dto.%[1]s = types.Int64Value(data["%[2]s"].(int64))
 			}`, util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.Int64 `tfsdk:\"%[2]s\"`", util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		} else if val.List != nil {
@@ -63,7 +63,7 @@ func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
 					%[3]s
 				}}.AttributeTypes(), convertedTemp%[1]s)
 			}`, CamelToPascalCase(n), PascalToSnakeCase(n), GenObject(val.SingleNested.Attributes, n)) + "\n"
-			m = m + fmt.Sprintf("%[1]s         types.Object `tfsdk:\"%[2]s\"`", CamelToPascalCase(n), PascalToSnakeCase(n)) + "\n"
+			m = m + fmt.Sprintf("%[1]s         types.Object `tfsdk:\"%[2]s\"`", util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		}
 
 	}

@@ -23,6 +23,7 @@ type GenerateAllCommand struct {
 	flagIRInputPath string
 	flagOutputPath  string
 	flagPackageName string
+	flagGenRefresh  bool
 }
 
 func (cmd *GenerateAllCommand) Flags() *flag.FlagSet {
@@ -30,6 +31,7 @@ func (cmd *GenerateAllCommand) Flags() *flag.FlagSet {
 	fs.StringVar(&cmd.flagIRInputPath, "input", "", "path to intermediate representation (JSON)")
 	fs.StringVar(&cmd.flagOutputPath, "output", "./output", "directory path to output generated code files")
 	fs.StringVar(&cmd.flagPackageName, "package", "", "name of Go package for generated code files")
+	fs.BoolVar(&cmd.flagGenRefresh, "gen_refresh", false, "whether render new refresh files or not")
 
 	return fs
 }
@@ -123,7 +125,7 @@ func (cmd *GenerateAllCommand) runInternal(ctx context.Context, logger *slog.Log
 		return fmt.Errorf("error generating data source code: %w", err)
 	}
 
-	err = generateResourceCode(ctx, spec, cmd.flagOutputPath, cmd.flagPackageName, "Resource", logger)
+	err = generateResourceCode(ctx, spec, cmd.flagOutputPath, cmd.flagPackageName, "Resource", cmd.flagGenRefresh, logger)
 	if err != nil {
 		return fmt.Errorf("error generating resource code: %w", err)
 	}
