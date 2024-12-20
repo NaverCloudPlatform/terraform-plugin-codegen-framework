@@ -331,6 +331,8 @@ func (t *Template) RenderTest() []byte {
 		PackageName       string
 		RefreshObjectName string
 		ReadMethod        string
+		ReadMethodName    string
+		ReadReqBody       string
 		Endpoint          string
 		ReadPathParams    string
 	}{
@@ -339,6 +341,8 @@ func (t *Template) RenderTest() []byte {
 		PackageName:       t.packageName,
 		RefreshObjectName: t.refreshObjectName,
 		ReadMethod:        t.readMethod,
+		ReadMethodName:    t.readMethodName,
+		ReadReqBody:       t.readReqBody,
 		Endpoint:          t.endpoint,
 		ReadPathParams:    t.readPathParams,
 	}
