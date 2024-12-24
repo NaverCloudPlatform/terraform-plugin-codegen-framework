@@ -21,11 +21,13 @@ import (
 
 // Diagnostics might not be needed.
 // Because response type of create operation is different from read operation, reload the read response to get unified refresh data.
-func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(ctx context.Context, diagnostics *diag.Diagnosticse, createRes map[string]interface{}) {
+func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(ctx context.Context, diagnostics *diag.Diagnostics, createRes map[string]interface{}) {
+
+	// id :=
 
 	// Indicate where to get resource id from create response
-	// EX) err := a.waitResourceCreated(ctx, createRes.ApiKey.Attributes()["api_key_id"].String())
-	
+	// EX) err := a.waitResourceCreated(ctx, id)
+
 	// if err != nil {
 	//	diagnostics.AddError("CREATING ERROR", err.Error())
 	//	return
