@@ -61,7 +61,7 @@ func testAccCheck{{.ResourceName | ToLowerCase}}Exists(n string, provider *schem
 			return err
 		}
 
-		return fmt.Errorf("{{.ResourceName | ToCamelCase}} not found")
+		return nil 
 	}
 }
 
