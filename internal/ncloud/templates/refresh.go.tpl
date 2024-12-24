@@ -20,17 +20,23 @@ import (
 // ReadReqBody string
 
 // Diagnostics might not be needed.
-func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(ctx context.Context, diagnostics *diag.Diagnostics, response *ncloudsdk.{{.CreateMethodName}}Response) {
+// Because response type of create operation is different from read operation, reload the read response to get unified refresh data.
+func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(ctx context.Context, diagnostics *diag.Diagnosticse, createRes map[string]interface{}) {
 
-	// Indicate where to get objects from create response
-	// EX) err := a.waitResourceCreated(ctx, response.ApiKey.Attributes()["api_key_id"].String())
+	// Indicate where to get resource id from create response
+	// EX) err := a.waitResourceCreated(ctx, createRes.ApiKey.Attributes()["api_key_id"].String())
 	
 	// if err != nil {
 	//	diagnostics.AddError("CREATING ERROR", err.Error())
 	//	return
 	// }
 
-	var postPlan ApikeydtoModel
+	var postPlan {{.RefreshObjectName | ToPascalCase}}Model
+
+	c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
+	response, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
+			{{.ReadReqBody}}
+	})
 
 	// Fill required attributes
 	// Copy(&postPlan, response)
@@ -51,7 +57,7 @@ func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(diagnosti
 	//	 return
 	// }
 
-	var postPlan ApikeydtoModel
+	var postPlan {{.RefreshObjectName | ToPascalCase}}Model
 
 	// Fill required attributes
 	// Copy(&postPlan, response)

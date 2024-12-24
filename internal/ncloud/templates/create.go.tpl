@@ -24,7 +24,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 	
 	tflog.Info(ctx, "Create{{.ResourceName | ToPascalCase}} reqParams="+common.MarshalUncheckedString(reqParams))
 
-	response, err := c.{{.CreateMethodName}}_TF(reqParams)
+	response, err := c.{{.CreateMethodName}}(reqParams)
 	if err != nil {
 		resp.Diagnostics.AddError("Error with {{.CreateMethodName}}_TF", err.Error())
 		return
