@@ -29,7 +29,7 @@ func TestAccResourceNcloud{{.ProviderName | ToPascalCase}}_{{.ResourceName | ToL
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheck{{.ResourceName | ToLowerCase}}Exists(resourceName, GetTestProvider(true)),
 					resource.TestCheckResourceAttr(resourceName, "{{.ResourceName | ToCamelCase}}_name", {{.ResourceName | ToCamelCase}}Name),
-    
+
                     // check all the other attributes
 				),
 			},
@@ -61,7 +61,7 @@ func testAccCheck{{.ResourceName | ToLowerCase}}Exists(n string, provider *schem
 			return err
 		}
 
-		return nil 
+		return nil
 	}
 }
 
