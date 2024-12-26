@@ -40,6 +40,11 @@ func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(
 			{{.ReadReqBody}}
 	})
 
+	// if err != nil {
+	//	diagnostics.AddError("CREATING ERROR", err.Error())
+	//	return
+	// }
+
 	// Fill required attributes
 	// Copy(&postPlan, response)
 	// postPlan.ID = types.StringValue(response.ApiKey.Attributes()["api_key_id"].String())
