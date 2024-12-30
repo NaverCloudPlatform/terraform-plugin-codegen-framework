@@ -355,7 +355,7 @@ func (t *Template) RenderTest() []byte {
 	return b.Bytes()
 }
 
-// 초기화를 통해 필요한 데이터들을 미리 계산한다.
+// Allocate prerequisite values
 func New(spec util.NcloudSpecification, resourceName, packageName string) *Template {
 	var refreshObjectName string
 	var id string
