@@ -5,7 +5,6 @@
 // ReadMethodName string
 // Endpoint string
 // ReadReqBody string
-// ReadReqBody
 
 func (plan *{{.RefreshObjectName | ToPascalCase}}Model) waitResourceCreated(ctx context.Context, id string) error {
 	stateConf := &retry.StateChangeConf{
