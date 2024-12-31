@@ -1,12 +1,17 @@
 {{ define "Update" }}
-// Template for generating Terraform provider Update operation code
-// Required data is as follows.
-// ResourceName string
-// RefreshObjectName string
-// UpdateReqBody string
-// UpdateMethodName string
-// Endpoint string
-// UpdatePathParams string, optional
+/* =================================================================================
+ * Update Template
+ * Required data are as follows
+ *
+		ResourceName      string
+		RefreshObjectName string
+		UpdateReqBody     string
+		UpdateMethod      string
+		UpdateMethodName  string
+		Endpoint          string
+		UpdatePathParams  string
+		ReadPathParams    string
+ * ================================================================================= */
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan {{.RefreshObjectName | ToPascalCase}}Model

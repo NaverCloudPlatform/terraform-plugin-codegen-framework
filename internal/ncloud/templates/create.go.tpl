@@ -1,12 +1,17 @@
 {{ define "Create" }}
-// Template for generating Terraform provider Create operation code
-// Required data is as follows.
-// ResourceName string
-// RefreshObjectName string
-// CreateReqBody string
-// CreateMethodName string
-// Endpoint string
-// CreatePathParams string, optional
+/* =================================================================================
+ * Create Template
+ * Required data are as follows
+ *
+		ResourceName      string
+		RefreshObjectName string
+		CreateReqBody     string
+		CreateMethod      string
+		CreateMethodName  string
+		Endpoint          string
+		CreatePathParams  string
+		IdGetter          string
+ * ================================================================================= */
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan {{.RefreshObjectName | ToPascalCase}}Model
@@ -21,7 +26,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 	reqParams := &ncloudsdk.{{.CreateMethodName}}Request{
 		{{.CreateReqBody}}
 	}
-	
+
 	tflog.Info(ctx, "Create{{.ResourceName | ToPascalCase}} reqParams="+common.MarshalUncheckedString(reqParams))
 
 	response, err := c.{{.CreateMethodName}}(reqParams)

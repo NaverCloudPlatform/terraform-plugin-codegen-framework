@@ -1,4 +1,16 @@
 {{ define "Refresh" }}
+/* =================================================================================
+ * Refresh Template 
+ * Required data are as follows
+ *
+		PackageName       string
+		RefreshObjectName string
+		Endpoint          string
+		CreateMethodName  string
+		ReadMethodName    string
+		ReadReqBody       string
+ * ================================================================================= */
+
 package {{.PackageName}}
 
 import (
@@ -10,28 +22,20 @@ import (
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/ncloudsdk"
 )
 
-// Refresh code to write down manually.
-// Required data is as follows.
-// PackageName string
-// RefreshObjectName string
-// Endpoint string
-// CreateMethodName string
-// ReadMethodName string
-// ReadReqBody string
-
 // Diagnostics might not be Required.
 // Because response type of create operation is different from read operation, reload the read response to get unified refresh data.
 func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(ctx context.Context, diagnostics *diag.Diagnostics, createRes map[string]interface{}) {
 
-	// id :=
+	// Allocate resource id from create response
+	id :=
 
 	// Indicate where to get resource id from create response
-	// EX) err := a.waitResourceCreated(ctx, id)
+	err := a.waitResourceCreated(ctx, id)
 
-	// if err != nil {
-	//	diagnostics.AddError("CREATING ERROR", err.Error())
-	//	return
-	// }
+	if err != nil {
+		diagnostics.AddError("CREATING ERROR", err.Error())
+		return
+	}
 
 	var postPlan {{.RefreshObjectName | ToPascalCase}}Model
 
@@ -40,14 +44,13 @@ func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(
 			{{.ReadReqBody}}
 	})
 
-	// if err != nil {
-	//	diagnostics.AddError("CREATING ERROR", err.Error())
-	//	return
-	// }
+	if err != nil {
+		diagnostics.AddError("CREATING ERROR", err.Error())
+		return
+	}
 
 	// Fill required attributes
-	// Copy(&postPlan, response)
-	// postPlan.ID = types.StringValue(response.ApiKey.Attributes()["api_key_id"].String())
+	ncloudsdk.Copy(&postPlan, response)
 
 	*a = postPlan
 }
@@ -59,17 +62,15 @@ func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(diagnosti
 			{{.ReadReqBody}}
 	})
 
-	// if err != nil {
-	//	 diagnostics.AddError("CREATING ERROR", err.Error())
-	//	 return
-	// }
+	if err != nil {
+		 diagnostics.AddError("CREATING ERROR", err.Error())
+		 return
+	}
 
 	var postPlan {{.RefreshObjectName | ToPascalCase}}Model
 
 	// Fill required attributes
-	// Copy(&postPlan, response)
-	// postPlan.ID = types.StringValue(response.ApiKey.Attributes()["api_key_id"].String())
-	// objectRes, _ := types.ObjectValueFrom(context.TODO(), a.ApiKey.AttributeTypes(context.TODO()), res)
+	ncloudsdk.Copy(&postPlan, response)
 
 	*a = postPlan
 }

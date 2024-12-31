@@ -1,4 +1,19 @@
 {{ define "Test" }}
+/* =================================================================================
+ * Test Template
+ * Required data are as follows
+ *
+		ProviderName      string
+		ResourceName      string
+		PackageName       string
+		RefreshObjectName string
+		ReadMethod        string
+		ReadMethodName    string
+		ReadReqBody       string
+		Endpoint          string
+		ReadPathParams    string
+ * ================================================================================= */
+
 package {{.PackageName}}_test
 
 import (
