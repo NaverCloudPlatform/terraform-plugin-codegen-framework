@@ -1,6 +1,6 @@
 {{ define "Wait" }}
 // Template for generating Terraform provider Waiting operation code
-// Needed data is as follows.
+// Required data is as follows.
 // RefreshObjectName string
 // ReadMethodName string
 // Endpoint string

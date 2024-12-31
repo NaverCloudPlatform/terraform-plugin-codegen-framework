@@ -19,7 +19,7 @@ import (
 // ReadMethodName string
 // ReadReqBody string
 
-// Diagnostics might not be needed.
+// Diagnostics might not be Required.
 // Because response type of create operation is different from read operation, reload the read response to get unified refresh data.
 func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(ctx context.Context, diagnostics *diag.Diagnostics, createRes map[string]interface{}) {
 

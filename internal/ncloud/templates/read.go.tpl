@@ -1,6 +1,6 @@
 {{ define "Read" }}
 // Template for generating Terraform provider Read operation code
-// Needed data is as follows.
+// Required data is as follows.
 // ResourceName string
 // RefreshObjectName string
 

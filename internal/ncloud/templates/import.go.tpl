@@ -1,6 +1,6 @@
 {{ define "ImportState" }}
 // Template for generating Terraform provider Initial code
-// Needed data is as follows.
+// Required data is as follows.
 // ResourceName string
 // ImportStateLogic string
 

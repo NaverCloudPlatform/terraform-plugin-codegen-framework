@@ -12,8 +12,8 @@ import (
 )
 
 // To generate actual data, extract data from config.yml and code-spec.json, and render code for each receiver based on that data.
-// New(): Extracts the data needed for code generation. Currently, it extracts data from config.yml and code-spec.json, but it is planned to unify everything into code-spec.json in the future.
-// RenderInitial(): Generates small code blocks needed initially.
+// New(): Extracts the data Required for code generation. Currently, it extracts data from config.yml and code-spec.json, but it is planned to unify everything into code-spec.json in the future.
+// RenderInitial(): Generates small code blocks Required initially.
 // RenderCreate(): Generates the Create function.
 // RenderRead(): Generates the Read function.
 // RenderUpdate(): Generates the Update function.

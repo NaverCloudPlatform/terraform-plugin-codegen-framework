@@ -1,6 +1,6 @@
 {{ define "Create" }}
 // Template for generating Terraform provider Create operation code
-// Needed data is as follows.
+// Required data is as follows.
 // ResourceName string
 // RefreshObjectName string
 // CreateReqBody string

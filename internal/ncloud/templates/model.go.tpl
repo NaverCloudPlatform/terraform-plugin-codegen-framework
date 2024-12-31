@@ -1,6 +1,6 @@
 {{ define "Model" }}
 // Template for generating Terraform provider Model code
-// Needed data is as follows.
+// Required data is as follows.
 // RefreshObjectName string
 // Model string
 

@@ -1,6 +1,6 @@
 {{ define "Update" }}
 // Template for generating Terraform provider Update operation code
-// Needed data is as follows.
+// Required data is as follows.
 // ResourceName string
 // RefreshObjectName string
 // UpdateReqBody string

@@ -1,6 +1,6 @@
 {{ define "Delete" }}
 // Template for generating Terraform provider Delete operation code
-// Needed data is as follows.
+// Required data is as follows.
 // ResourceName string
 // DeleteMethodName string
 // Endpoint string
