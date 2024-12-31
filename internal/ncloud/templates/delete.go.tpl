@@ -1,14 +1,10 @@
-/*
-================================================================================
-Template for generating Terraform provider Delete operation code
-Required data is as follows.
-
-- ResourceName string 
-- DeleteMethodName string
-- Endpoint string
-- DeletePathParams string, optional
-================================================================================
-*/
+{{ define "Delete" }}
+// Template for generating Terraform provider Delete operation code
+// Required data is as follows.
+// ResourceName string
+// DeleteMethodName string
+// Endpoint string
+// DeletePathParams string, optional
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var plan {{.RefreshObjectName | ToPascalCase}}Model

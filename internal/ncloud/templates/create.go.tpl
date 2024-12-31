@@ -1,17 +1,12 @@
 {{ define "Create" }}
-/*
-================================================================================
-Template for generating Terraform provider Create operation code
-Required data is as follows.
-
-- ResourceName string
-- RefreshObjectName string
-- CreateReqBody string
-- CreateMethodName string
-- Endpoint string
-- CreatePathParams string, optional
-================================================================================
-*/
+// Template for generating Terraform provider Create operation code
+// Required data is as follows.
+// ResourceName string
+// RefreshObjectName string
+// CreateReqBody string
+// CreateMethodName string
+// Endpoint string
+// CreatePathParams string, optional
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan {{.RefreshObjectName | ToPascalCase}}Model

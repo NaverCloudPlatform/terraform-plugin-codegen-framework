@@ -1,13 +1,3 @@
-/*
-================================================================================
-Template for generating Terraform provider ImportState operation code
-Required data is as follows.
-
-- ResourceName string
-- ImportStateLogic string
-================================================================================
-*/
-
 {{ define "ImportState" }}
 // Template for generating Terraform provider Initial code
 // Required data is as follows.
