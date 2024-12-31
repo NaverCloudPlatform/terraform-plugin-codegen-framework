@@ -1,3 +1,13 @@
+/*
+================================================================================
+Template for generating Terraform provider Model code
+Required data is as follows.
+
+- RefreshObjectName string
+- Model string
+================================================================================
+*/
+
 {{ define "Model" }}
 // Template for generating Terraform provider Model code
 // Required data is as follows.

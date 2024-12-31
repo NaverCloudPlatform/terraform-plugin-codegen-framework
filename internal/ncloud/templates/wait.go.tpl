@@ -1,10 +1,14 @@
-{{ define "Wait" }}
-// Template for generating Terraform provider Waiting operation code
-// Required data is as follows.
-// RefreshObjectName string
-// ReadMethodName string
-// Endpoint string
-// ReadReqBody string
+/*
+================================================================================
+Template for generating Terraform provider Waiting operation code
+Required data is as follows.
+
+- RefreshObjectName string
+- ReadMethodName string
+- Endpoint string
+- ReadReqBody string
+================================================================================
+*/
 
 func (plan *{{.RefreshObjectName | ToPascalCase}}Model) waitResourceCreated(ctx context.Context, id string) error {
 	stateConf := &retry.StateChangeConf{

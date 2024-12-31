@@ -1,7 +1,12 @@
-{{ define "Initial" }}
-// Template for generating Terraform provider Initial code
-// Required data is as follows.
-// ResourceName string
+/*
+================================================================================
+Template for generating Terraform provider Initial code
+Required data is as follows.
+
+- ResourceName string
+- ProviderName string
+================================================================================
+*/
 
 var (
 	_ resource.Resource                = &{{.ResourceName | ToCamelCase}}Resource{}
