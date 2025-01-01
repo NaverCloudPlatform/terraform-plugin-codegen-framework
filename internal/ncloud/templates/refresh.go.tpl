@@ -1,6 +1,6 @@
 {{ define "Refresh" }}
 /* =================================================================================
- * Refresh Template 
+ * Refresh Template
  * Required data are as follows
  *
 		PackageName       string
