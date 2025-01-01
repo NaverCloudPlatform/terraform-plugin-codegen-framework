@@ -3,14 +3,15 @@
  * Create Template
  * Required data are as follows
  *
-		ResourceName      string
-		RefreshObjectName string
-		CreateReqBody     string
-		CreateMethod      string
-		CreateMethodName  string
-		Endpoint          string
-		CreatePathParams  string
-		IdGetter          string
+		ResourceName           string
+		RefreshObjectName      string
+		CreateReqBody          string
+		CreateReqOptionalParam string
+		CreateMethod           string
+		CreateMethodName       string
+		Endpoint               string
+		CreatePathParams       string
+		IdGetter               string
  * ================================================================================= */
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -26,6 +27,8 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 	reqParams := &ncloudsdk.{{.CreateMethodName}}Request{
 		{{.CreateReqBody}}
 	}
+
+	{{.CreateReqOptionalParam}}
 
 	tflog.Info(ctx, "Create{{.ResourceName | ToPascalCase}} reqParams="+common.MarshalUncheckedString(reqParams))
 

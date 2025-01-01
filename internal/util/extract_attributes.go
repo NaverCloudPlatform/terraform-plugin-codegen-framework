@@ -7,8 +7,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
 )
 
+type RequestTypeWithOptional struct {
+	Parameters  []string                 `json:"parameters,omitempty"`
+	RequestBody *RequestBodyWithOptional `json:"request_body,omitempty"`
+	Response    string                   `json:"response,omitempty"`
+}
+
+type RequestBodyWithOptional struct {
+	Name     string   `json:"name,omitempty"`
+	Required []string `json:"required,omitempty"`
+	Optional []string `json:"optional,omitempty"`
+}
+
 type RequestTypeWithMethodAndPath struct {
-	spec.RequestType
+	RequestTypeWithOptional
 	Method string `json:"method"`
 	Path   string `json:"path"`
 }
@@ -32,10 +44,6 @@ type RequestWithRefreshObjectName struct {
 type RequestTypeWithRefreshObjectName struct {
 	RequestTypeWithMethodAndPath
 	Response string `json:"response"`
-}
-
-type RequestWithResponse struct {
-	Requests []spec.Request
 }
 
 type NcloudProvider struct {
