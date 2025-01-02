@@ -268,6 +268,7 @@ func (t *Template) RenderRefresh() []byte {
 		CreateMethodName  string
 		ReadMethodName    string
 		ReadReqBody       string
+		IdGetter          string
 	}{
 		PackageName:       t.packageName,
 		RefreshObjectName: t.refreshObjectName,
@@ -275,6 +276,7 @@ func (t *Template) RenderRefresh() []byte {
 		CreateMethodName:  t.createMethodName,
 		ReadMethodName:    t.readMethodName,
 		ReadReqBody:       t.readReqBody,
+		IdGetter:          t.idGetter,
 	}
 
 	err = refreshTemplate.ExecuteTemplate(&b, "Refresh", data)
@@ -529,7 +531,7 @@ func extractReadPathParams(path string) string {
 
 func makeIdGetter(target string) string {
 	parts := strings.Split(target, ".")
-	s := "response"
+	s := "createRes"
 
 	for idx, val := range parts {
 		if idx == len(parts)-1 {

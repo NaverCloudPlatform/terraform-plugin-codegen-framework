@@ -9,6 +9,7 @@
 		CreateMethodName  string
 		ReadMethodName    string
 		ReadReqBody       string
+		IdGetter          string
  * ================================================================================= */
 
 package {{.PackageName}}
@@ -27,7 +28,7 @@ import (
 func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(ctx context.Context, diagnostics *diag.Diagnostics, createRes map[string]interface{}) {
 
 	// Allocate resource id from create response
-	id :=
+	id := {{.IdGetter}}
 
 	// Indicate where to get resource id from create response
 	err := a.waitResourceCreated(ctx, id)
