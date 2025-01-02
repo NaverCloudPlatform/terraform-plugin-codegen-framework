@@ -446,7 +446,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 		createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
 		if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 			reqParams.%[1]s = plan.%[1]s.ValueString()
-		},`, util.ToPascalCase(val)) + "\n"
+		}`, util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
 
 	for _, val := range targetResourceRequest.Update[0].RequestBody.Optional {
@@ -457,7 +457,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 		updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
 		if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 			reqParams.%[1]s = plan.%[1]s.ValueString()
-		},`, util.ToPascalCase(val)) + "\n"
+		}`, util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
 
 	t.funcMap = funcMap
