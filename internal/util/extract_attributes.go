@@ -14,9 +14,15 @@ type RequestTypeWithOptional struct {
 }
 
 type RequestBodyWithOptional struct {
-	Name     string   `json:"name,omitempty"`
-	Required []string `json:"required,omitempty"`
-	Optional []string `json:"optional,omitempty"`
+	Name     string                        `json:"name,omitempty"`
+	Required []string                      `json:"required,omitempty"`
+	Optional []*OptioanlParamsWithTypeInfo `json:"optional,omitempty"`
+}
+
+type OptioanlParamsWithTypeInfo struct {
+	Name   string `json:"name,omitempty"`
+	Type   string `json:"type,omitempty"`
+	Format string `json:"format,omitempty"`
 }
 
 type RequestTypeWithMethodAndPath struct {
