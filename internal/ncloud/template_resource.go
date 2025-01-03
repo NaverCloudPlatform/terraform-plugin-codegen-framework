@@ -3,7 +3,7 @@ package ncloud
 import (
 	"bytes"
 	"fmt"
-  "log"
+	"log"
 	"strings"
 	"text/template"
 
@@ -55,6 +55,7 @@ type Template struct {
 	refreshObjectName      string
 	model                  string
 	refreshLogic           string
+	refreshWithResponse    string
 	endpoint               string
 	deletePathParams       string
 	updatePathParams       string
@@ -68,13 +69,13 @@ type Template struct {
 	updateReqBody          string
 	readReqBody            string
 	deleteReqBody          string
-	createOpOptionalParams string
-	updateOpOptionalParams string
-	readOpOptionalParams   string
 	createMethodName       string
 	readMethodName         string
 	updateMethodName       string
 	deleteMethodName       string
+	createOpOptionalParams string
+	updateOpOptionalParams string
+	readOpOptionalParams   string
 	idGetter               string
 	funcMap                template.FuncMap
 }
@@ -296,21 +297,23 @@ func (t *Template) RenderRefresh() []byte {
 	}
 
 	data := struct {
-		PackageName       string
-		RefreshObjectName string
-		Endpoint          string
-		CreateMethodName  string
-		ReadMethodName    string
-		ReadReqBody       string
-		IdGetter          string
+		PackageName         string
+		RefreshObjectName   string
+		RefreshWithResponse string
+		Endpoint            string
+		CreateMethodName    string
+		ReadMethodName      string
+		ReadReqBody         string
+		IdGetter            string
 	}{
-		PackageName:       t.packageName,
-		RefreshObjectName: t.refreshObjectName,
-		Endpoint:          t.endpoint,
-		CreateMethodName:  t.createMethodName,
-		ReadMethodName:    t.readMethodName,
-		ReadReqBody:       t.readReqBody,
-		IdGetter:          t.idGetter,
+		PackageName:         t.packageName,
+		RefreshObjectName:   t.refreshObjectName,
+		RefreshWithResponse: t.refreshWithResponse,
+		Endpoint:            t.endpoint,
+		CreateMethodName:    t.createMethodName,
+		ReadMethodName:      t.readMethodName,
+		ReadReqBody:         t.readReqBody,
+		IdGetter:            t.idGetter,
 	}
 
 	err = refreshTemplate.ExecuteTemplate(&b, "Refresh", data)
@@ -580,6 +583,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 	t.importStateLogic = makeImportStateLogic(importStateOverride)
 	t.model = model
 	t.refreshLogic = refreshLogic
+	t.refreshWithResponse = MakeRefreshFromResponse(attributes, resourceName)
 	t.endpoint = spec.Provider.Endpoint
 	t.deletePathParams = extractPathParams(targetResourceRequest.Delete.Path)
 	t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
@@ -716,4 +720,69 @@ func makeImportStateLogic(target string) string {
 	}
 
 	return s
+}
+
+func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) string {
+	var s strings.Builder
+
+	for _, val := range attr {
+		if val.String != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				postPlan.%[3]s = types.StringValue(response.%[2]s.Attributes()["%[1]s"].String())
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.Bool != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				tempVal, err := strconv.ParseBool(response.%[2]s.Attributes()["%[1]s"].String())
+				if err != nil {
+					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to bool: %v", err))
+					return
+				}
+				postPlan.%[3]s = types.BoolValue(tempVal)
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.Int64 != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				tempVal, err := strconv.Atoi(response.%[2]s.Attributes()["%[1]s"].String())
+				if err != nil {
+					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to int: %v", err))
+					return
+				}
+				postPlan.%[3]s = types.Int64Value(int64(tempVal))
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.List != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				listRes, diag := types.ListValueFrom(ctx, a.ApiKey.AttributeTypes(ctx), response.%[2]s)
+				if diag.HasError() {
+					diagnostics.AddError("CONVERSION ERROR", "Error occured while getting object value: %[1]s")
+					return
+				}
+				postPlan.%[3]s = listRes
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.ListNested != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				listRes, diag := types.ListValueFrom(ctx, a.ApiKey.AttributeTypes(ctx), response.%[2]s)
+				if diag.HasError() {
+					diagnostics.AddError("CONVERSION ERROR", "Error occured while getting object value: %[1]s")
+					return
+				}
+				postPlan.%[3]s = listRes
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.SingleNested != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				objectRes, diag := types.ObjectValueFrom(ctx, a.ApiKey.AttributeTypes(ctx), response.%[2]s)
+				if diag.HasError() {
+					diagnostics.AddError("CONVERSION ERROR", "Error occured while getting object value: %[1]s")
+					return
+				}
+				postPlan.%[3]s = objectRes
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		}
+	}
+
+	return s.String()
 }
