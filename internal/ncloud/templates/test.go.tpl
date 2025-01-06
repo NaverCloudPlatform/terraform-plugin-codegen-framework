@@ -3,15 +3,18 @@
  * Test Template
  * Required data are as follows
  *
-		ProviderName      string
-		ResourceName      string
-		PackageName       string
-		RefreshObjectName string
-		ReadMethod        string
-		ReadMethodName    string
-		ReadReqBody       string
-		Endpoint          string
-		ReadPathParams    string
+		ProviderName               string
+		ResourceName               string
+		PackageName                string
+		RefreshObjectName          string
+		ReadMethod                 string
+		ReadMethodName             string
+		ReadReqBody                string
+		Endpoint                   string
+		ReadPathParams             string
+		ConfigParams               string
+		ReadReqBodyForCheckExist   string
+		ReadReqBodyForCheckDestroy string
  * ================================================================================= */
 
 package {{.PackageName}}_test
@@ -44,7 +47,6 @@ func TestAccResourceNcloud{{.ProviderName | ToPascalCase}}_{{.ResourceName | ToL
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheck{{.ResourceName | ToLowerCase}}Exists(resourceName, GetTestProvider(true)),
 					resource.TestCheckResourceAttr(resourceName, "{{.ResourceName | ToCamelCase}}_name", {{.ResourceName | ToCamelCase}}Name),
-
                     // check all the other attributes
 				),
 			},
@@ -67,7 +69,7 @@ func testAccCheck{{.ResourceName | ToLowerCase}}Exists(n string, provider *schem
 
 		response, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
             // change value with "resource.Primary.ID"
-            {{.ReadReqBody}}
+            {{.ReadReqBodyForCheckExist}}
 		})
 		if response == nil {
 			return err
@@ -89,7 +91,7 @@ func testAccCheck{{.ResourceName | ToPascalCase}}Destroy(s *terraform.State) err
 		c := ncloudsdk.NewClient("https://apigateway.apigw.ntruss.com/api/v1", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
 		_, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
             // change value with "rs.Primary.ID"
-            {{.ReadReqBody}}
+            {{.ReadReqBodyForCheckDestroy}}
 		})
 		if err != nil {
 			return nil
@@ -102,9 +104,7 @@ func testAccCheck{{.ResourceName | ToPascalCase}}Destroy(s *terraform.State) err
 func testAcc{{.ResourceName | ToLowerCase}}Config({{.ResourceName | ToCamelCase}}Name string) string {
 	return fmt.Sprintf(`
 	resource "ncloud_{{.ProviderName | ToLowerCase}}_{{.ResourceName | ToLowerCase}}" "testing_{{.ResourceName | ToLowerCase}}" {
-		{{.ResourceName | ToCamelCase}}_name			= "%[1]s"
-
-        // fill the other required attributes
+		{{.ConfigParams}}
 	}`, {{.ResourceName | ToCamelCase}}Name)
 }
 
