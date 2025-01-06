@@ -481,10 +481,51 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 		}
 	}
 
-	if targetResourceRequest.Update[0].Parameters != nil {
-		for _, val := range targetResourceRequest.Update[0].Parameters.Required {
-			updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+	if len(targetResourceRequest.Update) > 0 {
+		if targetResourceRequest.Update[0].Parameters != nil {
+			for _, val := range targetResourceRequest.Update[0].Parameters.Required {
+				updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+			}
 		}
+
+		for _, val := range targetResourceRequest.Update[0].RequestBody.Optional {
+
+			switch val.Type {
+			case "string":
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+			case "integer":
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+			case "boolean":
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+			case "array":
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			// Array and Object are treated as string with serialization
+			default:
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+			}
+		}
+
+		t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
+		t.updateMethod = targetResourceRequest.Update[0].Method
+		t.updateReqBody = updateReqBody
+		t.updateOpOptionalParams = updateOpOptionalParams
+		t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
 	}
 
 	for _, val := range targetResourceRequest.Delete.Parameters.Required {
@@ -518,39 +559,6 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 		// Array and Object are treated as string with serialization
 		default:
 			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
-			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
-			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-		}
-	}
-
-	for _, val := range targetResourceRequest.Update[0].RequestBody.Optional {
-
-		switch val.Type {
-		case "string":
-			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
-			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
-			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-		case "integer":
-			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
-			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
-			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-		case "boolean":
-			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
-			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
-			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-		case "array":
-			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
-			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
-			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-
-		// Array and Object are treated as string with serialization
-		default:
-			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
@@ -600,26 +608,21 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 	t.refreshWithResponse = MakeRefreshFromResponse(attributes, resourceName)
 	t.endpoint = spec.Provider.Endpoint
 	t.deletePathParams = extractPathParams(targetResourceRequest.Delete.Path)
-	t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
 	t.readPathParams = extractReadPathParams(targetResourceRequest.Read.Path)
 	t.createPathParams = extractPathParams(targetResourceRequest.Create.Path)
 	t.configParams = MakeTestTFConfig(targetResourceRequest.Create.RequestBody.Required, targetResourceRequest.Create.Parameters)
 	t.deleteMethod = targetResourceRequest.Delete.Method
-	t.updateMethod = targetResourceRequest.Update[0].Method
 	t.readMethod = targetResourceRequest.Read.Method
 	t.createMethod = targetResourceRequest.Create.Method
 	t.createReqBody = createReqBody
-	t.updateReqBody = updateReqBody
 	t.readReqBody = readReqBody
 	t.deleteReqBody = deleteReqBody
 	t.readReqBodyForCheckExist = readReqBodyForCheckExist
 	t.readReqBodyForCheckDestroy = readReqBodyForCheckDestroy
 	t.createOpOptionalParams = createOpOptionalParams
-	t.updateOpOptionalParams = updateOpOptionalParams
 	t.readOpOptionalParams = readOpOptionalParams
 	t.createMethodName = strings.ToUpper(targetResourceRequest.Create.Method) + getMethodName(targetResourceRequest.Create.Path)
 	t.readMethodName = strings.ToUpper(targetResourceRequest.Read.Method) + getMethodName(targetResourceRequest.Read.Path)
-	t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
 	t.deleteMethodName = strings.ToUpper(targetResourceRequest.Delete.Method) + getMethodName(targetResourceRequest.Delete.Path)
 	t.idGetter = makeIdGetter(id)
 
