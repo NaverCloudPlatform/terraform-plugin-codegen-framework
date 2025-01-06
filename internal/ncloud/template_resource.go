@@ -58,6 +58,7 @@ type Template struct {
 	refreshLogic               string
 	refreshWithResponse        string
 	endpoint                   string
+	isUpdateExists             bool
 	deletePathParams           string
 	updatePathParams           string
 	readPathParams             string
@@ -203,20 +204,22 @@ func (t *Template) RenderUpdate() []byte {
 	}
 
 	data := struct {
+		IsUpdateExists         bool
 		ResourceName           string
 		RefreshObjectName      string
 		UpdateReqBody          string
-		UpdateReqOptioanlParam string
+		UpdateReqOptionalParam string
 		UpdateMethod           string
 		UpdateMethodName       string
 		Endpoint               string
 		UpdatePathParams       string
 		ReadPathParams         string
 	}{
+		IsUpdateExists:         t.isUpdateExists,
 		ResourceName:           t.resourceName,
 		RefreshObjectName:      t.refreshObjectName,
 		UpdateReqBody:          t.updateReqBody,
-		UpdateReqOptioanlParam: t.updateOpOptionalParams,
+		UpdateReqOptionalParam: t.updateOpOptionalParams,
 		UpdateMethod:           t.updateMethod,
 		UpdateMethodName:       t.updateMethodName,
 		Endpoint:               t.endpoint,
@@ -521,6 +524,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 			}
 		}
 
+		t.isUpdateExists = true
 		t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
 		t.updateMethod = targetResourceRequest.Update[0].Method
 		t.updateReqBody = updateReqBody
