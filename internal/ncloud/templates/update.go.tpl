@@ -3,6 +3,7 @@
  * Update Template
  * Required data are as follows
  *
+		IsUpdateExists    bool
 		ResourceName      string
 		RefreshObjectName string
 		UpdateReqBody     string
@@ -14,6 +15,8 @@
  * ================================================================================= */
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	{{ if .IsUpdateExists }}
+
 	var plan {{.RefreshObjectName | ToPascalCase}}Model
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -44,6 +47,8 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, re
 	plan.refreshFromOutput(&resp.Diagnostics, plan.ID.ValueString())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+
+	{{ end}}
 }
 
 {{ end }}

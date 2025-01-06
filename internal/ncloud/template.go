@@ -48,6 +48,7 @@ type Template struct {
 	deleteMethodName    string
 	idGetter            string
 	funcMap             template.FuncMap
+	isUpdateExists      bool
 }
 
 func (t *Template) RenderInitial() []byte {
@@ -167,6 +168,7 @@ func (t *Template) RenderUpdate() []byte {
 	}
 
 	data := struct {
+		IsUpdateExists    bool
 		ResourceName      string
 		RefreshObjectName string
 		UpdateReqBody     string
@@ -176,6 +178,7 @@ func (t *Template) RenderUpdate() []byte {
 		UpdatePathParams  string
 		ReadPathParams    string
 	}{
+		IsUpdateExists:    t.isUpdateExists,
 		ResourceName:      t.resourceName,
 		RefreshObjectName: t.refreshObjectName,
 		UpdateReqBody:     t.updateReqBody,
@@ -424,6 +427,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 			updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
 		}
 
+		t.isUpdateExists = true
 		t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
 		t.updateMethod = targetResourceRequest.Update[0].Method
 		t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
