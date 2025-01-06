@@ -68,6 +68,13 @@ func FirstAlphabetToUpperCase(s string) string {
 	return s
 }
 
+func FirstAlphabetToLowerCase(s string) string {
+	if len(s) > 0 {
+		return strings.ToLower(string(s[0])) + s[1:]
+	}
+	return s
+}
+
 func ExtractPath(s string) string {
 	parsedUrl, err := url.Parse(s)
 	if err != nil {
@@ -89,6 +96,7 @@ func CreateFuncMap() template.FuncMap {
 		"PathToPascal":             PathToPascal,
 		"FirstAlphabet":            FirstAlphabet,
 		"FirstAlphabetToUpperCase": FirstAlphabetToUpperCase,
+		"FirstAlphabetToLowerCase": FirstAlphabetToLowerCase,
 		"JoinStrings":              JoinStrings,
 		"ExtractPath":              ExtractPath,
 	}
