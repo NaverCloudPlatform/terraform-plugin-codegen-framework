@@ -10,7 +10,7 @@ import (
 )
 
 // generate converter that convert openapi.json schema to terraform type
-func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
+func Gen_ConvertOAStoTFTypes_Resource(data resource.Attributes) (string, string, error) {
 	var s string
 	var m string
 
@@ -48,7 +48,7 @@ func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
 				dto.%[1]s = diagOff(types.ListValueFrom, context.TODO(), types.ListType{ElemType:
 					%[3]s
 				}}.ElementType(), temp%[1]s)
-			}`, CamelToPascalCase(n), PascalToSnakeCase(n), GenArray(val.ListNested.NestedObject.Attributes, n)) + "\n"
+			}`, CamelToPascalCase(n), PascalToSnakeCase(n), GenArray_Resource(val.ListNested.NestedObject.Attributes, n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.List `tfsdk:\"%[2]s\"`", CamelToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		} else if val.SingleNested != nil {
 			s = s + fmt.Sprintf(`
@@ -62,7 +62,7 @@ func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
 				dto.%[1]s = diagOff(types.ObjectValueFrom, context.TODO(), types.ObjectType{AttrTypes: map[string]attr.Type{
 					%[3]s
 				}}.AttributeTypes(), convertedTemp%[1]s)
-			}`, CamelToPascalCase(n), PascalToSnakeCase(n), GenObject(val.SingleNested.Attributes, n)) + "\n"
+			}`, CamelToPascalCase(n), PascalToSnakeCase(n), GenObject_Resource(val.SingleNested.Attributes, n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.Object `tfsdk:\"%[2]s\"`", util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		}
 
@@ -71,27 +71,7 @@ func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
 	return s, m, nil
 }
 
-func PascalToSnakeCase(s string) string {
-	var result []rune
-	for i, r := range s {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result = append(result, '_')
-		}
-		result = append(result, r)
-	}
-	return strings.ToLower(string(result))
-}
-
-func CamelToPascalCase(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	r := []rune(s)
-	r[0] = unicode.ToUpper(r[0])
-	return string(r)
-}
-
-func GenArray(d resource.Attributes, pName string) string {
+func GenArray_Resource(d resource.Attributes, pName string) string {
 	var r string
 	var s string
 	var t string
@@ -109,7 +89,7 @@ func GenArray(d resource.Attributes, pName string) string {
 			s = s + fmt.Sprintf(`
 			"%[1]s": types.ObjectType{AttrTypes: map[string]attr.Type{
 				%[2]s
-			}},`, n, GenObject(val.SingleNested.Attributes, n)) + "\n"
+			}},`, n, GenObject_Resource(val.SingleNested.Attributes, n)) + "\n"
 		}
 	}
 
@@ -122,7 +102,7 @@ func GenArray(d resource.Attributes, pName string) string {
 	return r
 }
 
-func GenObject(d resource.Attributes, pName string) string {
+func GenObject_Resource(d resource.Attributes, pName string) string {
 	var s string
 
 	for _, val := range d {
@@ -144,13 +124,33 @@ func GenObject(d resource.Attributes, pName string) string {
 			s = s + fmt.Sprintf(`
 			"%[1]s": types.ListType{ElemType:
 				%[2]s
-			}},`, n, GenArray(val.ListNested.NestedObject.Attributes, n)) + "\n"
+			}},`, n, GenArray_Resource(val.ListNested.NestedObject.Attributes, n)) + "\n"
 		} else if val.SingleNested != nil {
 			s = s + fmt.Sprintf(`
 			"%[1]s": types.ObjectType{AttrTypes: map[string]attr.Type{
 				%[2]s
-			}},`, n, GenObject(val.SingleNested.Attributes, n)) + "\n"
+			}},`, n, GenObject_Resource(val.SingleNested.Attributes, n)) + "\n"
 		}
 	}
 	return s
+}
+
+func PascalToSnakeCase(s string) string {
+	var result []rune
+	for i, r := range s {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			result = append(result, '_')
+		}
+		result = append(result, r)
+	}
+	return strings.ToLower(string(result))
+}
+
+func CamelToPascalCase(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
 }

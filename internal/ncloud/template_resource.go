@@ -12,13 +12,40 @@ import (
 )
 
 // To generate actual data, extract data from config.yml and code-spec.json, and render code for each receiver based on that data.
-// New(): Extracts the data Required for code generation. Currently, it extracts data from config.yml and code-spec.json, but it is planned to unify everything into code-spec.json in the future.
-// RenderInitial(): Generates small code blocks Required initially.
-// RenderCreate(): Generates the Create function.
-// RenderRead(): Generates the Read function.
-// RenderUpdate(): Generates the Update function.
-// RenderDelete(): Generates the Delete function.
-// Calculates the necessary data during initialization and performs rendering for each method.
+type BaseTemplate interface {
+
+	// RenderInitial generates small code blocks needed initially.
+	RenderInitial() []byte
+
+	// RenderCreate generates the Create function.
+	RenderCreate() []byte
+
+	// RenderRead generates the Read function.
+	RenderRead() []byte
+
+	// RenderUpdate generates the Update function.
+	RenderUpdate() []byte
+
+	// RenderDelete generates the Delete function.
+	RenderDelete() []byte
+
+	// RenderModel generates the model.
+	RenderModel() []byte
+
+	// RenderRefresh generates the Refresh function.
+	RenderRefresh() []byte
+
+	// RenderWait generates the Waiting Logic.
+	// Will be Rendered in refresh file.
+	RenderWait() []byte
+
+	// RenderTest generates the Test logic.
+	RenderTest() []byte
+
+	// RenderImportState generates the ImportState function.
+	RenderImportState() []byte
+}
+
 type Template struct {
 	spec                  util.NcloudSpecification
 	providerName          string
@@ -373,8 +400,9 @@ type RequestBodyWithOptional struct {
 	Optional []string `json:"optional,omitempty"`
 }
 
-// Allocate prerequisite values
-func New(spec util.NcloudSpecification, resourceName, packageName string) *Template {
+// Extracts the data needed for code generation. Currently, it extracts data from config.yml and code-spec.json, but it is planned to unify everything into code-spec.json in the future.
+func New(spec util.NcloudSpecification, resourceName, packageName string) BaseTemplate {
+	var b BaseTemplate
 	var refreshObjectName string
 	var id string
 	var attributes resource.Attributes
@@ -409,7 +437,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 		}
 	}
 
-	refreshLogic, model, err := Gen_ConvertOAStoTFTypes(attributes)
+	refreshLogic, model, err := Gen_ConvertOAStoTFTypes_Resource(attributes)
 	if err != nil {
 		log.Fatalf("error occurred with Gen_ConvertOAStoTFTypes: %v", err)
 	}
@@ -532,7 +560,9 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	t.deleteMethodName = strings.ToUpper(targetResourceRequest.Delete.Method) + getMethodName(targetResourceRequest.Delete.Path)
 	t.idGetter = makeIdGetter(id)
 
-	return t
+	b = t
+
+	return b
 }
 
 func getMethodName(s string) string {
