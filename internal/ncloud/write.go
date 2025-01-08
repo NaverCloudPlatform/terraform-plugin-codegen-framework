@@ -90,7 +90,7 @@ func WriteNcloudDataSources(dataSourcesSchema map[string][]byte, spec util.Nclou
 		dirName := ""
 
 		if packageName == "" {
-			dirName = fmt.Sprintf("%s_data_source", k)
+			dirName = k
 
 			err := os.MkdirAll(filepath.Join(outputDir, dirName), os.ModePerm)
 			if err != nil {
@@ -98,9 +98,9 @@ func WriteNcloudDataSources(dataSourcesSchema map[string][]byte, spec util.Nclou
 			}
 		}
 
-		filename := fmt.Sprintf("%s_data_source_gen.go", k)
+		filename := fmt.Sprintf("%s_data_source.go", k)
 
-		n := New(spec, k, packageName)
+		n := NewDataSources(spec, k)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -133,11 +133,6 @@ func WriteNcloudDataSources(dataSourcesSchema map[string][]byte, spec util.Nclou
 			return err
 		}
 
-		_, err = f.Write(n.RenderWait())
-		if err != nil {
-			return err
-		}
-
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
@@ -155,7 +150,7 @@ func WriteNcloudDataSourceTests(dataSourcesSchema map[string][]byte, spec util.N
 		dirName := ""
 
 		if packageName == "" {
-			dirName = fmt.Sprintf("%s_datasource", k)
+			dirName = fmt.Sprintf("%s_data_source", k)
 
 			err := os.MkdirAll(filepath.Join(outputDir, dirName), os.ModePerm)
 			if err != nil {
@@ -165,7 +160,7 @@ func WriteNcloudDataSourceTests(dataSourcesSchema map[string][]byte, spec util.N
 
 		filename := fmt.Sprintf("%s_data_source_test.go", k)
 
-		n := New(spec, k, packageName)
+		n := NewDataSources(spec, k)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {

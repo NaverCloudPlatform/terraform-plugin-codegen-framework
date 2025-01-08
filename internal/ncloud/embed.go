@@ -33,3 +33,15 @@ var TestTemplate string
 
 //go:embed templates/import.go.tpl
 var ImportStateTemplate string
+
+//go:embed templates/initial_datasource.go.tpl
+var InitialTemplateDataSource string
+
+//go:embed templates/read_datasource.go.tpl
+var ReadTemplateDataSource string
+
+//go:embed templates/model_datasource.go.tpl
+var ModelTemplateDataSource string
+
+//go:embed templates/refresh_datasource.go.tpl
+var RefreshTemplateDataSource string
