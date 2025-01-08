@@ -476,7 +476,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 		}
 	}
 
-	refreshLogic, model, err := Gen_ConvertOAStoTFTypes(attributes)
+	refreshLogic, model, err := Gen_ConvertOAStoTFTypes_Resource(attributes)
 	if err != nil {
 		log.Fatalf("error occurred with Gen_ConvertOAStoTFTypes: %v", err)
 	}
