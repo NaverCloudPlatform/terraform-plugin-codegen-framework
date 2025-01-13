@@ -449,7 +449,6 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 	var readReqBodyForCheckExist string
 	var readReqBodyForCheckDestroy string
 	var deleteReqBody string
-
 	var readOpOptionalParams string
 	var importStateOverride string
 	var targetResourceRequest util.RequestInfo
