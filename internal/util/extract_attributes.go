@@ -8,18 +8,29 @@ import (
 )
 
 type RequestTypeWithOptional struct {
+	Parameters  *ParameterWithOptional   `json:"parameters,omitempty"`
+	RequestBody *RequestBodyWithOptional `json:"request_body,omitempty"`
+	Response    string                   `json:"response,omitempty"`
+}
+
+type RequestTypeWithoutOptional struct {
 	Parameters  []string                 `json:"parameters,omitempty"`
 	RequestBody *RequestBodyWithOptional `json:"request_body,omitempty"`
 	Response    string                   `json:"response,omitempty"`
 }
 
 type RequestBodyWithOptional struct {
-	Name     string                        `json:"name,omitempty"`
-	Required []string                      `json:"required,omitempty"`
-	Optional []*OptioanlParamsWithTypeInfo `json:"optional,omitempty"`
+	Name     string                `json:"name,omitempty"`
+	Required []*ParamsWithTypeInfo `json:"required,omitempty"`
+	Optional []*ParamsWithTypeInfo `json:"optional,omitempty"`
 }
 
-type OptioanlParamsWithTypeInfo struct {
+type ParameterWithOptional struct {
+	Required []*ParamsWithTypeInfo `json:"required,omitempty"`
+	Optional []*ParamsWithTypeInfo `json:"optional,omitempty"`
+}
+
+type ParamsWithTypeInfo struct {
 	Name   string `json:"name,omitempty"`
 	Type   string `json:"type,omitempty"`
 	Format string `json:"format,omitempty"`
@@ -31,20 +42,26 @@ type RequestTypeWithMethodAndPath struct {
 	Path   string `json:"path"`
 }
 
+type RequestTypeWithMethodAndPathWithoutOptional struct {
+	RequestTypeWithoutOptional
+	Method string `json:"method"`
+	Path   string `json:"path"`
+}
+
 type RequestWithMethodAndPath struct {
-	Create RequestTypeWithMethodAndPath    `json:"create,omitempty"`
-	Read   RequestTypeWithMethodAndPath    `json:"read"`
-	Update []*RequestTypeWithMethodAndPath `json:"update"`
-	Delete RequestTypeWithMethodAndPath    `json:"delete"`
+	Create *RequestTypeWithMethodAndPath                `json:"create,omitempty"`
+	Read   *RequestTypeWithMethodAndPath                `json:"read"`
+	Update []*RequestTypeWithMethodAndPath              `json:"update"`
+	Delete *RequestTypeWithMethodAndPathWithoutOptional `json:"delete"`
 }
 
 type RequestWithRefreshObjectName struct {
-	Create RequestTypeWithMethodAndPath     `json:"create,omitempty"`
-	Read   RequestTypeWithRefreshObjectName `json:"read"`
-	Update []*RequestTypeWithMethodAndPath  `json:"update"`
-	Delete RequestTypeWithMethodAndPath     `json:"delete"`
-	Name   string                           `json:"name"`
-	Id     string                           `json:"id"`
+	Create RequestTypeWithMethodAndPath                 `json:"create,omitempty"`
+	Read   RequestTypeWithMethodAndPath                 `json:"read"`
+	Update []*RequestTypeWithMethodAndPath              `json:"update"`
+	Delete *RequestTypeWithMethodAndPathWithoutOptional `json:"delete"`
+	Name   string                                       `json:"name"`
+	Id     string                                       `json:"id"`
 }
 
 type RequestTypeWithRefreshObjectName struct {
