@@ -12,20 +12,22 @@ import (
 )
 
 type DataSourceTemplate struct {
-	spec              util.NcloudSpecification
-	providerName      string
-	resourceName      string
-	importStateLogic  string
-	refreshObjectName string
-	model             string
-	refreshLogic      string
-	endpoint          string
-	readPathParams    string
-	readMethod        string
-	readReqBody       string
-	readMethodName    string
-	idGetter          string
-	funcMap           template.FuncMap
+	spec                 util.NcloudSpecification
+	providerName         string
+	dataSourceName       string
+	packageName          string
+	importStateLogic     string
+	refreshObjectName    string
+	model                string
+	refreshLogic         string
+	endpoint             string
+	readPathParams       string
+	readMethod           string
+	readReqBody          string
+	readMethodName       string
+	readOpOptionalParams string
+	idGetter             string
+	funcMap              template.FuncMap
 }
 
 // RenderCreate implements BaseTemplate.
@@ -53,11 +55,11 @@ func (d *DataSourceTemplate) RenderInitial() []byte {
 	}
 
 	data := struct {
-		ProviderName string
-		ResourceName string
+		ProviderName   string
+		DataSourceName string
 	}{
-		ProviderName: d.providerName,
-		ResourceName: d.resourceName,
+		ProviderName:   d.providerName,
+		DataSourceName: d.dataSourceName,
 	}
 
 	err = initialTemplate.ExecuteTemplate(&b, "Initial_DataSource", data)
@@ -103,10 +105,10 @@ func (d *DataSourceTemplate) RenderRead() []byte {
 	}
 
 	data := struct {
-		ResourceName      string
+		DataSourceName    string
 		RefreshObjectName string
 	}{
-		ResourceName:      d.resourceName,
+		DataSourceName:    d.dataSourceName,
 		RefreshObjectName: d.refreshObjectName,
 	}
 
@@ -128,17 +130,21 @@ func (d *DataSourceTemplate) RenderRefresh() []byte {
 	}
 
 	data := struct {
+		PackageName       string
 		ResourceName      string
 		RefreshObjectName string
 		RefreshLogic      string
-		ReadMethod        string
+		ReadMethodName    string
+		ReadReqBody       string
 		Endpoint          string
 		ReadPathParams    string
 	}{
-		ResourceName:      d.resourceName,
+		PackageName:       d.packageName,
+		ResourceName:      d.dataSourceName,
 		RefreshObjectName: d.refreshObjectName,
 		RefreshLogic:      d.refreshLogic,
-		ReadMethod:        d.readMethod,
+		ReadMethodName:    d.readMethodName,
+		ReadReqBody:       d.readReqBody,
 		Endpoint:          d.endpoint,
 		ReadPathParams:    d.readPathParams,
 	}
@@ -166,28 +172,19 @@ func (d *DataSourceTemplate) RenderWait() []byte {
 	panic("Data source doesn't provide this method. Please use the right method.")
 }
 
-func NewDataSources(spec util.NcloudSpecification, datasourceName string) BaseTemplate {
+func NewDataSources(spec *util.NcloudSpecification, datasourceName, packageName string) BaseTemplate {
 	var b BaseTemplate
-	var id string
-	var attributes datasource.Attributes
-	var readReqBody string
-	var importStateOverride string
 	var targetResourceRequest util.RequestWithRefreshObjectName
 
 	d := &DataSourceTemplate{
-		spec:         spec,
-		resourceName: datasourceName,
+		spec:           *spec,
+		dataSourceName: datasourceName,
+		providerName:   spec.Provider.Name,
+		packageName:    packageName,
+		endpoint:       spec.Provider.Endpoint,
 	}
 
-	funcMap := util.CreateFuncMap()
-
-	for _, datasource := range spec.DataSources {
-		if datasource.Name == datasourceName {
-			id = datasource.Id
-			attributes = datasource.Schema.Attributes
-			importStateOverride = datasource.ImportStateOverride
-		}
-	}
+	d.funcMap = util.CreateFuncMap()
 
 	for _, val := range spec.Requests {
 		if val.Name == datasourceName {
@@ -195,27 +192,101 @@ func NewDataSources(spec util.NcloudSpecification, datasourceName string) BaseTe
 		}
 	}
 
-	_, model, err := Gen_ConvertOAStoTFTypes_Datasource(attributes)
-	if err != nil {
-		log.Fatalf("error occurred with Gen_ConvertOAStoTFTypes: %v", err)
+	if err := makeDataSourceIndividualValues(d, spec, datasourceName); err != nil {
+		log.Fatalf("error occurred with MakeDataSourceIndividualValues: %v", err)
 	}
 
-	for _, val := range targetResourceRequest.Read.Parameters {
-		readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+	if err := makeDataSourceReadOperationLogics(d, &targetResourceRequest); err != nil {
+		log.Fatalf("error occurred with MakeDataSourceReadOperationLogics: %v", err)
 	}
-
-	d.funcMap = funcMap
-	d.providerName = spec.Provider.Name
-	d.importStateLogic = MakeImportStateLogic(importStateOverride)
-	d.model = model
-	d.endpoint = spec.Provider.Endpoint
-	d.readPathParams = extractReadPathParams(targetResourceRequest.Read.Path)
-	d.readMethod = targetResourceRequest.Read.Method
-	d.readReqBody = readReqBody
-	d.readMethodName = strings.ToUpper(targetResourceRequest.Read.Method) + getMethodName(targetResourceRequest.Read.Path)
-	d.idGetter = makeIdGetter(id)
 
 	b = d
-
 	return b
+}
+
+func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestWithRefreshObjectName) error {
+	var readOpOptionalParams strings.Builder
+	var readReqBody strings.Builder
+
+	for _, val := range t.Read.Parameters.Required {
+		if _, err := readReqBody.WriteString(fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"); err != nil {
+			return err
+		}
+	}
+
+	for _, val := range t.Read.Parameters.Optional {
+
+		switch val.Type {
+
+		case "string":
+			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+				return err
+			}
+
+		case "integer":
+			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+				return err
+			}
+
+		case "boolean":
+			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+				return err
+			}
+
+		case "array":
+			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+				return err
+			}
+
+		// Array and Object are treated as string with serialization
+		default:
+			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+				return err
+			}
+		}
+	}
+
+	d.readOpOptionalParams = readOpOptionalParams.String()
+	d.readReqBody = readReqBody.String()
+	d.readPathParams = extractReadPathParams(t.Read.Path)
+	d.readMethod = t.Read.Method
+	d.readMethodName = strings.ToUpper(t.Read.Method) + getMethodName(t.Read.Path)
+
+	return nil
+}
+
+func makeDataSourceIndividualValues(d *DataSourceTemplate, spec *util.NcloudSpecification, datasourceName string) error {
+	var attributes datasource.Attributes
+
+	for _, datasource := range spec.DataSources {
+		if datasource.Name == datasourceName {
+			d.idGetter = makeIdGetter(datasource.Id)
+			d.refreshObjectName = datasource.RefreshObjectName
+			attributes = datasource.Schema.Attributes
+			d.importStateLogic = makeImportStateLogic(datasource.ImportStateOverride)
+		}
+	}
+
+	_, model, err := Gen_ConvertOAStoTFTypes_Datasource(attributes)
+	if err != nil {
+		return fmt.Errorf("error occurred with Gen_ConvertOAStoTFTypes: %v", err)
+	}
+
+	d.model = model
+	return nil
 }

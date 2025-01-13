@@ -33,7 +33,7 @@ func WriteDataSources(dataSourcesSchema map[string][]byte, spec util.NcloudSpeci
 
 		filename := fmt.Sprintf("%s_data_source_gen.go", k)
 
-		n := ncloud.New(spec, k, packageName)
+		n := ncloud.NewDataSources(&spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -99,7 +99,7 @@ func WriteResources(resourcesSchema map[string][]byte, spec util.NcloudSpecifica
 
 		filename := fmt.Sprintf("%s_resource_gen.go", k)
 
-		n := ncloud.New(spec, k, packageName)
+		n := ncloud.NewDataSources(&spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -185,7 +185,7 @@ func WriteResourceTests(resourcesSchema map[string][]byte, spec util.NcloudSpeci
 
 		filename := fmt.Sprintf("%s_resource_gen_test.go", k)
 
-		n := ncloud.New(spec, k, packageName)
+		n := ncloud.NewDataSources(&spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -225,18 +225,19 @@ func WriteDataSourceTests(dataSourcesSchema map[string][]byte, spec util.NcloudS
 
 		filename := fmt.Sprintf("%s_data_source_gen_test.go", k)
 
-		n := ncloud.New(spec, k, packageName)
+		// n := ncloud.NewDataSources(spec, k)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
 			return err
 		}
 
-		// CORE - 이곳에 코드를 추가한다.
-		_, err = f.Write(n.RenderTest())
-		if err != nil {
-			return err
-		}
+		// TODO - Implement this method
+		// // CORE - 이곳에 코드를 추가한다.
+		// _, err = f.Write(n.RenderTest())
+		// if err != nil {
+		// 	return err
+		// }
 
 		filePath := f.Name()
 

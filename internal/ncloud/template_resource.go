@@ -47,35 +47,36 @@ type BaseTemplate interface {
 }
 
 type Template struct {
-	spec                  util.NcloudSpecification
-	providerName          string
-	resourceName          string
-	packageName           string
-	importStateLogic      string
-	refreshObjectName     string
-	model                 string
-	refreshLogic          string
-	endpoint              string
-	deletePathParams      string
-	updatePathParams      string
-	readPathParams        string
-	createPathParams      string
-	deleteMethod          string
-	updateMethod          string
-	readMethod            string
-	createMethod          string
-	createReqBody         string
-	updateReqBody         string
-	readReqBody           string
-	deleteReqBody         string
-	createOpOptionalParam string
-	updateOpOptionalParam string
-	createMethodName      string
-	readMethodName        string
-	updateMethodName      string
-	deleteMethodName      string
-	idGetter              string
-	funcMap               template.FuncMap
+	spec                   util.NcloudSpecification
+	providerName           string
+	resourceName           string
+	packageName            string
+	importStateLogic       string
+	refreshObjectName      string
+	model                  string
+	refreshLogic           string
+	endpoint               string
+	deletePathParams       string
+	updatePathParams       string
+	readPathParams         string
+	createPathParams       string
+	deleteMethod           string
+	updateMethod           string
+	readMethod             string
+	createMethod           string
+	createReqBody          string
+	updateReqBody          string
+	readReqBody            string
+	deleteReqBody          string
+	createOpOptionalParams string
+	updateOpOptionalParams string
+	readOpOptionalParams   string
+	createMethodName       string
+	readMethodName         string
+	updateMethodName       string
+	deleteMethodName       string
+	idGetter               string
+	funcMap                template.FuncMap
 }
 
 func (t *Template) RenderInitial() []byte {
@@ -148,7 +149,7 @@ func (t *Template) RenderCreate() []byte {
 		ResourceName:           t.resourceName,
 		RefreshObjectName:      t.refreshObjectName,
 		CreateReqBody:          t.createReqBody,
-		CreateReqOptionalParam: t.createOpOptionalParam,
+		CreateReqOptionalParam: t.createOpOptionalParams,
 		CreateMethod:           t.createMethod,
 		CreateMethodName:       t.createMethodName,
 		Endpoint:               t.endpoint,
@@ -210,7 +211,7 @@ func (t *Template) RenderUpdate() []byte {
 		ResourceName:           t.resourceName,
 		RefreshObjectName:      t.refreshObjectName,
 		UpdateReqBody:          t.updateReqBody,
-		UpdateReqOptioanlParam: t.updateOpOptionalParam,
+		UpdateReqOptioanlParam: t.updateOpOptionalParams,
 		UpdateMethod:           t.updateMethod,
 		UpdateMethodName:       t.updateMethodName,
 		Endpoint:               t.endpoint,
@@ -401,7 +402,7 @@ type RequestBodyWithOptional struct {
 }
 
 // Extracts the data needed for code generation. Currently, it extracts data from config.yml and code-spec.json, but it is planned to unify everything into code-spec.json in the future.
-func New(spec util.NcloudSpecification, resourceName, packageName string) BaseTemplate {
+func NewResource(spec util.NcloudSpecification, resourceName, packageName string) BaseTemplate {
 	var b BaseTemplate
 	var refreshObjectName string
 	var id string
@@ -410,8 +411,9 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) BaseTe
 	var updateReqBody string
 	var readReqBody string
 	var deleteReqBody string
-	var createOpOptionalParam string
-	var updateOpOptionalParam string
+	var createOpOptionalParams string
+	var updateOpOptionalParams string
+	var readOpOptionalParams string
 	var importStateOverride string
 	var targetResourceRequest util.RequestWithRefreshObjectName
 
@@ -443,23 +445,23 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) BaseTe
 	}
 
 	for _, val := range targetResourceRequest.Create.RequestBody.Required {
-		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val), util.FirstAlphabetToUpperCase(val)) + "\n"
+		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 	}
 
 	for _, val := range targetResourceRequest.Update[0].RequestBody.Required {
-		updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val), util.FirstAlphabetToUpperCase(val)) + "\n"
+		updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 	}
 
-	for _, val := range targetResourceRequest.Read.Parameters {
-		readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+	for _, val := range targetResourceRequest.Read.Parameters.Required {
+		readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 	}
 
-	for _, val := range targetResourceRequest.Create.Parameters {
-		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+	for _, val := range targetResourceRequest.Create.Parameters.Required {
+		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 	}
 
-	for _, val := range targetResourceRequest.Update[0].Parameters {
-		updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+	for _, val := range targetResourceRequest.Update[0].Parameters.Required {
+		updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 	}
 
 	for _, val := range targetResourceRequest.Delete.Parameters {
@@ -470,29 +472,29 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) BaseTe
 
 		switch val.Type {
 		case "string":
-			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "integer":
-			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "boolean":
-			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "array":
-			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 
 		// Array and Object are treated as string with serialization
 		default:
-			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
@@ -503,29 +505,62 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) BaseTe
 
 		switch val.Type {
 		case "string":
-			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "integer":
-			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "boolean":
-			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "array":
-			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 
 		// Array and Object are treated as string with serialization
 		default:
-			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		}
+	}
+
+	for _, val := range targetResourceRequest.Read.Parameters.Optional {
+
+		switch val.Type {
+		case "string":
+			readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "integer":
+			readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "boolean":
+			readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "array":
+			readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			// Array and Object are treated as string with serialization
+		default:
+			readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
@@ -536,7 +571,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) BaseTe
 	t.providerName = spec.Provider.Name
 	t.packageName = packageName
 	t.refreshObjectName = refreshObjectName
-	t.importStateLogic = MakeImportStateLogic(importStateOverride)
+	t.importStateLogic = makeImportStateLogic(importStateOverride)
 	t.model = model
 	t.refreshLogic = refreshLogic
 	t.endpoint = spec.Provider.Endpoint
@@ -552,8 +587,9 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) BaseTe
 	t.updateReqBody = updateReqBody
 	t.readReqBody = readReqBody
 	t.deleteReqBody = deleteReqBody
-	t.createOpOptionalParam = createOpOptionalParam
-	t.updateOpOptionalParam = updateOpOptionalParam
+	t.createOpOptionalParams = createOpOptionalParams
+	t.updateOpOptionalParams = updateOpOptionalParams
+	t.readOpOptionalParams = readOpOptionalParams
 	t.createMethodName = strings.ToUpper(targetResourceRequest.Create.Method) + getMethodName(targetResourceRequest.Create.Path)
 	t.readMethodName = strings.ToUpper(targetResourceRequest.Read.Method) + getMethodName(targetResourceRequest.Read.Path)
 	t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
@@ -661,7 +697,7 @@ func makeIdGetter(target string) string {
 	return s
 }
 
-func MakeImportStateLogic(target string) string {
+func makeImportStateLogic(target string) string {
 	parts := strings.Split(target, ".")
 
 	if len(parts) < 2 {

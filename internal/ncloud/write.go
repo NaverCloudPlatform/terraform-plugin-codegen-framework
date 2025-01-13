@@ -26,7 +26,7 @@ func WriteNcloudResources(resourcesSchema map[string][]byte, spec util.NcloudSpe
 
 		filename := fmt.Sprintf("%s.go", k)
 
-		n := New(spec, k, packageName)
+		n := NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -100,7 +100,7 @@ func WriteNcloudDataSources(dataSourcesSchema map[string][]byte, spec util.Nclou
 
 		filename := fmt.Sprintf("%s_data_source.go", k)
 
-		n := NewDataSources(spec, k)
+		n := NewDataSources(&spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -124,11 +124,6 @@ func WriteNcloudDataSources(dataSourcesSchema map[string][]byte, spec util.Nclou
 		}
 
 		_, err = f.Write(n.RenderModel())
-		if err != nil {
-			return err
-		}
-
-		_, err = f.Write(n.RenderRefresh())
 		if err != nil {
 			return err
 		}
@@ -160,7 +155,7 @@ func WriteNcloudDataSourceTests(dataSourcesSchema map[string][]byte, spec util.N
 
 		filename := fmt.Sprintf("%s_data_source_test.go", k)
 
-		n := NewDataSources(spec, k)
+		n := NewDataSources(&spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -199,7 +194,7 @@ func WriteNcloudResourceTests(resourcesSchema map[string][]byte, spec util.Nclou
 
 		filename := fmt.Sprintf("%s_test.go", k)
 
-		n := New(spec, k, packageName)
+		n := NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -234,7 +229,7 @@ func WriteNcloudResourceRefresh(resourcesSchema map[string][]byte, spec util.Ncl
 
 		filename := fmt.Sprintf("%s_refresh.go", k)
 
-		n := New(spec, k, packageName)
+		n := NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -250,6 +245,47 @@ func WriteNcloudResourceRefresh(resourcesSchema map[string][]byte, spec util.Ncl
 		if err != nil {
 			return err
 		}
+
+		filePath := f.Name()
+
+		util.RemoveDuplicates(filePath)
+	}
+
+	return nil
+}
+
+func WriteNcloudDataSourceRefresh(resourcesSchema map[string][]byte, spec util.NcloudSpecification, outputDir, packageName string) error {
+	for k := range resourcesSchema {
+		dirName := ""
+
+		if packageName == "" {
+			dirName = k
+
+			err := os.MkdirAll(filepath.Join(outputDir, dirName), os.ModePerm)
+			if err != nil {
+				return err
+			}
+		}
+
+		filename := fmt.Sprintf("%s_refresh.go", k)
+
+		n := NewDataSources(&spec, k, packageName)
+
+		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
+		if err != nil {
+			return err
+		}
+
+		_, err = f.Write(n.RenderRefresh())
+		if err != nil {
+			return err
+		}
+
+		// TODO - Implement RenderWait() method
+		// _, err = f.Write(n.RenderWait())
+		// if err != nil {
+		// 	return err
+		// }
 
 		filePath := f.Name()
 
