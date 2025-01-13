@@ -28,6 +28,7 @@ type GenerateDataSourcesCommand struct {
 	flagIRInputPath string
 	flagOutputPath  string
 	flagPackageName string
+	flagGenRefresh  bool
 }
 
 func (cmd *GenerateDataSourcesCommand) Flags() *flag.FlagSet {
@@ -35,6 +36,7 @@ func (cmd *GenerateDataSourcesCommand) Flags() *flag.FlagSet {
 	fs.StringVar(&cmd.flagIRInputPath, "input", "./ir.json", "path to intermediate representation (JSON)")
 	fs.StringVar(&cmd.flagOutputPath, "output", "./output", "directory path to output generated code files")
 	fs.StringVar(&cmd.flagPackageName, "package", "", "name of Go package for generated code files")
+	fs.BoolVar(&cmd.flagGenRefresh, "gen_refresh", false, "whether render new refresh files or not")
 
 	return fs
 }
@@ -123,7 +125,7 @@ func (cmd *GenerateDataSourcesCommand) runInternal(ctx context.Context, logger *
 		return fmt.Errorf("error parsing IR JSON: %w", err)
 	}
 
-	err = generateDataSourceCode(ctx, spec, cmd.flagOutputPath, cmd.flagPackageName, "DataSource", logger)
+	err = generateDataSourceCode(ctx, spec, cmd.flagOutputPath, cmd.flagPackageName, "DataSource", cmd.flagGenRefresh, logger)
 	if err != nil {
 		return fmt.Errorf("error generating data source code: %w", err)
 	}
@@ -131,7 +133,7 @@ func (cmd *GenerateDataSourcesCommand) runInternal(ctx context.Context, logger *
 	return nil
 }
 
-func generateDataSourceCode(ctx context.Context, spec util.NcloudSpecification, outputPath, packageName, generatorType string, logger *slog.Logger) error {
+func generateDataSourceCode(ctx context.Context, spec util.NcloudSpecification, outputPath, packageName, generatorType string, genRefresh bool, logger *slog.Logger) error {
 	// ctxWithPath := logging.SetPathInContext(ctx, "data_source")
 
 	// convert IR to framework schemas
@@ -164,6 +166,14 @@ func generateDataSourceCode(ctx context.Context, spec util.NcloudSpecification, 
 	err = output.WriteDataSourceTests(formattedSchemas, spec, outputPath, packageName)
 	if err != nil {
 		return fmt.Errorf("error writing Go code to output: %w", err)
+	}
+
+	// Render refresh file conditionally
+	if genRefresh {
+		err = ncloud.WriteNcloudDataSourceRefresh(formattedSchemas, spec, outputPath, packageName)
+		if err != nil {
+			return fmt.Errorf("error writing Go code to output: %w", err)
+		}
 	}
 
 	return nil
