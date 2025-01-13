@@ -1,4 +1,4 @@
-{{ define "Initial_DataSource"}}
+{{ define "Initial_DataSource" }}
 // Template for generating Terraform provider Initial code for Data Source
 // Needed data is as follows.
 // DataSourceName string
