@@ -3,7 +3,7 @@ package ncloud
 import (
 	"bytes"
 	"fmt"
-	"log"
+  "log"
 	"strings"
 	"text/template"
 
@@ -302,6 +302,7 @@ func (t *Template) RenderRefresh() []byte {
 		CreateMethodName  string
 		ReadMethodName    string
 		ReadReqBody       string
+		IdGetter          string
 	}{
 		PackageName:       t.packageName,
 		RefreshObjectName: t.refreshObjectName,
@@ -309,6 +310,7 @@ func (t *Template) RenderRefresh() []byte {
 		CreateMethodName:  t.createMethodName,
 		ReadMethodName:    t.readMethodName,
 		ReadReqBody:       t.readReqBody,
+		IdGetter:          t.idGetter,
 	}
 
 	err = refreshTemplate.ExecuteTemplate(&b, "Refresh", data)
@@ -456,16 +458,20 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 		readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 	}
 
-	for _, val := range targetResourceRequest.Create.Parameters.Required {
-		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+	if targetResourceRequest.Create.Parameters != nil {
+		for _, val := range targetResourceRequest.Create.Parameters.Required {
+			createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+		}
 	}
 
-	for _, val := range targetResourceRequest.Update[0].Parameters.Required {
-		updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+	if targetResourceRequest.Update[0].Parameters != nil {
+		for _, val := range targetResourceRequest.Update[0].Parameters.Required {
+			updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+		}
 	}
 
-	for _, val := range targetResourceRequest.Delete.Parameters {
-		deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+	for _, val := range targetResourceRequest.Delete.Parameters.Required {
+		deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 	}
 
 	for _, val := range targetResourceRequest.Create.RequestBody.Optional {
@@ -683,7 +689,7 @@ func extractReadPathParams(path string) string {
 
 func makeIdGetter(target string) string {
 	parts := strings.Split(target, ".")
-	s := "response"
+	s := "createRes"
 
 	for idx, val := range parts {
 		if idx == len(parts)-1 {
