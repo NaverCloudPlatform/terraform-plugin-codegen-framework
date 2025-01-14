@@ -130,23 +130,25 @@ func (d *DataSourceTemplate) RenderRefresh() []byte {
 	}
 
 	data := struct {
-		PackageName       string
-		ResourceName      string
-		RefreshObjectName string
-		RefreshLogic      string
-		ReadMethodName    string
-		ReadReqBody       string
-		Endpoint          string
-		ReadPathParams    string
+		PackageName          string
+		ResourceName         string
+		RefreshObjectName    string
+		RefreshLogic         string
+		ReadMethodName       string
+		ReadReqBody          string
+		Endpoint             string
+		ReadPathParams       string
+		ReadOpOptionalParams string
 	}{
-		PackageName:       d.packageName,
-		ResourceName:      d.dataSourceName,
-		RefreshObjectName: d.refreshObjectName,
-		RefreshLogic:      d.refreshLogic,
-		ReadMethodName:    d.readMethodName,
-		ReadReqBody:       d.readReqBody,
-		Endpoint:          d.endpoint,
-		ReadPathParams:    d.readPathParams,
+		PackageName:          d.packageName,
+		ResourceName:         d.dataSourceName,
+		RefreshObjectName:    d.refreshObjectName,
+		RefreshLogic:         d.refreshLogic,
+		ReadMethodName:       d.readMethodName,
+		ReadReqBody:          d.readReqBody,
+		Endpoint:             d.endpoint,
+		ReadPathParams:       d.readPathParams,
+		ReadOpOptionalParams: d.readOpOptionalParams,
 	}
 
 	err = refreshTemplate.ExecuteTemplate(&b, "Refresh_DataSource", data)
