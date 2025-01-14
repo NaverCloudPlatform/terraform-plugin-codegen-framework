@@ -1,23 +1,32 @@
 {{ define "Test" }}
-// Template for generating Terraform provider test code
-// Needed data is as follows.
-// ProviderName string
-// ResourceName string
-// RefreshObjectName string
-// ReadMethod string
-// Endpoint string
-// ReadPathParams string, optional
+/* =================================================================================
+ * Test Template
+ * Required data are as follows
+ *
+		ProviderName      string
+		ResourceName      string
+		PackageName       string
+		RefreshObjectName string
+		ReadMethod        string
+		ReadMethodName    string
+		ReadReqBody       string
+		Endpoint          string
+		ReadPathParams    string
+ * ================================================================================= */
 
-package {{.ResourceName}}_test
+package {{.PackageName}}_test
 
 import (
+	"fmt"
+	"os"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
 	. "github.com/terraform-providers/terraform-provider-ncloud/internal/acctest"
-	"github.com/terraform-providers/terraform-provider-ncloud/internal/conn"
+	"github.com/terraform-providers/terraform-provider-ncloud/internal/ncloudsdk"
 )
 
 func TestAccResourceNcloud{{.ProviderName | ToPascalCase}}_{{.ResourceName | ToLowerCase}}_basic(t *testing.T) {
@@ -34,7 +43,9 @@ func TestAccResourceNcloud{{.ProviderName | ToPascalCase}}_{{.ResourceName | ToL
 				Config: testAcc{{.ResourceName | ToLowerCase}}Config({{.ResourceName | ToCamelCase}}Name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheck{{.ResourceName | ToLowerCase}}Exists(resourceName, GetTestProvider(true)),
-					resource.TestMatchResourceAttr(resourceName, "{{.ResourceName | ToCamelCase}}_name", {{.ResourceName | ToCamelCase}}Name),
+					resource.TestCheckResourceAttr(resourceName, "{{.ResourceName | ToCamelCase}}_name", {{.ResourceName | ToCamelCase}}Name),
+
+                    // check all the other attributes
 				),
 			},
 		},
@@ -52,15 +63,20 @@ func testAccCheck{{.ResourceName | ToLowerCase}}Exists(n string, provider *schem
 			return fmt.Errorf("no ID is set")
 		}
 
-        response, err := util.MakeRequest("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(resource.Primary.ID){{end}}, "")
-        if response == nil {
-            return err
-        }
+		c := ncloudsdk.NewClient("https://apigateway.apigw.ntruss.com/api/v1", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
+
+		response, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
+            // change value with "resource.Primary.ID"
+            {{.ReadReqBody}}
+		})
+		if response == nil {
+			return err
+		}
 		if err != nil {
 			return err
 		}
 
-		return fmt.Errorf("{{.ResourceName | ToCamelCase}} not found")
+		return nil
 	}
 }
 
@@ -70,10 +86,14 @@ func testAccCheck{{.ResourceName | ToPascalCase}}Destroy(s *terraform.State) err
 			continue
 		}
 
-        response, _ := util.MakeRequest("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(rs.Primary.ID){{end}}, "")
-        if response["error"] != nil {
-            return nil
-        }
+		c := ncloudsdk.NewClient("https://apigateway.apigw.ntruss.com/api/v1", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
+		_, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
+            // change value with "rs.Primary.ID"
+            {{.ReadReqBody}}
+		})
+		if err != nil {
+			return nil
+		}
 	}
 
 	return nil
@@ -83,11 +103,9 @@ func testAcc{{.ResourceName | ToLowerCase}}Config({{.ResourceName | ToCamelCase}
 	return fmt.Sprintf(`
 	resource "ncloud_{{.ProviderName | ToLowerCase}}_{{.ResourceName | ToLowerCase}}" "testing_{{.ResourceName | ToLowerCase}}" {
 		{{.ResourceName | ToCamelCase}}_name			= "%[1]s"
-	}`, {{.ResourceName | ToCamelCase}}Name)
-}
 
-func clearDoubleQuote(s string) string {
-	return strings.Replace(strings.Replace(strings.Replace(s, "\\", "", -1), "\"", "", -1), `"`, "", -1)
+        // fill the other required attributes
+	}`, {{.ResourceName | ToCamelCase}}Name)
 }
 
 {{ end }}

@@ -1,10 +1,17 @@
 {{ define "Delete" }}
-// Template for generating Terraform provider Delete operation code
-// Needed data is as follows.
-// ResourceName string
-// DeleteMethod string
-// Endpoint string
-// DeletePathParams string, optional
+/* =================================================================================
+ * Delete Template
+ * Required data are as follows
+ *
+		ResourceName      string
+		RefreshObjectName string
+		DeleteMethod      string
+		DeleteReqBody     string
+		DeleteMethodName  string
+		Endpoint          string
+		DeletePathParams  string
+		IdGetter          string
+ * ================================================================================= */
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var plan {{.RefreshObjectName | ToPascalCase}}Model
@@ -14,13 +21,21 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Delete(ctx context.Context, re
 		return
 	}
 
-	_, err := util.MakeRequest("{{.DeleteMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{.DeletePathParams}}, "")
+ 	reqParams := &ncloudsdk.{{.DeleteMethodName}}Request{
+		{{.DeleteReqBody}}
+	}
+
+	tflog.Info(ctx, "Update{{.DeleteMethodName}} reqParams="+common.MarshalUncheckedString(reqParams))
+
+	c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
+
+	_, err := c.{{.DeleteMethodName}}_TF(reqParams)
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return
 	}
 
-	err = waitResourceDeleted(ctx, clearDoubleQuote(plan.ID.String()), plan)
+	err = plan.waitResourceDeleted(ctx, plan.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return

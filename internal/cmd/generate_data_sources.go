@@ -147,47 +147,11 @@ func generateDataSourceCode(ctx context.Context, spec util.NcloudSpecification, 
 		return fmt.Errorf("error converting Plugin Framework schema to Go code: %w", err)
 	}
 
-	// // generate model code
-	// models, err := g.Models()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // generate custom type and value types code
-	// customTypeValue, err := g.CustomTypeValue()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // generate "expand" and "flatten" code
-	// toFromFunctions, err := g.ToFromFunctions(ctxWithPath, logger)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	// format schema code
 	formattedSchemas, err := format.Format(schemas)
 	if err != nil {
 		return fmt.Errorf("error formatting Go code: %w", err)
 	}
-
-	// // format model code
-	// formattedModels, err := format.Format(models)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // format custom type and value types code
-	// formattedCustomTypeValue, err := format.Format(customTypeValue)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // format "expand" and "flatten" code
-	// formattedToFromFunctions, err := format.Format(toFromFunctions)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	// --- NCLOUD Logic ---
 

@@ -1,17 +1,26 @@
 {{ define "Wait" }}
-// Template for generating Terraform provider Waiting operation code
-// Needed data is as follows.
-// RefreshObjectName string
-// ReadMethod string
-// Endpoint string
-// ReadPathParams string, optional
+/* =================================================================================
+ * Wait Template
+ * Required data are as follows
+ *
+		ReadMethod        string
+		ReadMethodName    string
+		Endpoint          string
+		ReadPathParams    string
+		RefreshObjectName string
+		ReadReqBody       string
+ * ================================================================================= */
 
-func waitResourceCreated(ctx context.Context, id string, plan {{.RefreshObjectName | ToPascalCase}}Model) error {
+func (plan *{{.RefreshObjectName | ToPascalCase}}Model) waitResourceCreated(ctx context.Context, id string) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{"CREATING"},
 		Target:  []string{"CREATED"},
 		Refresh: func() (interface{}, string, error) {
-			response, err := util.MakeRequest("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
+			c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
+			response, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
+					// need to use id
+					{{.ReadReqBody}}
+			})
 			if err != nil {
 				return response, "CREATING", nil
 			}
@@ -32,13 +41,17 @@ func waitResourceCreated(ctx context.Context, id string, plan {{.RefreshObjectNa
 	return nil
 }
 
-func waitResourceDeleted(ctx context.Context, id string, plan {{.RefreshObjectName | ToPascalCase}}Model) error {
+func (plan *{{.RefreshObjectName | ToPascalCase}}Model) waitResourceDeleted(ctx context.Context, id string) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{"DELETING"},
 		Target:  []string{"DELETED"},
 		Refresh: func() (interface{}, string, error) {
-			response, _ := util.MakeRequest("{{.ReadMethod}}", "{{.Endpoint | ExtractPath}}", "{{.Endpoint}}"{{if .ReadPathParams}}{{.ReadPathParams}}+"/"+clearDoubleQuote(id){{end}}, "")
-			if response["error"] != nil {
+			c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
+			response, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
+					// need to use id
+					{{.ReadReqBody}}
+			})
+			if err == nil {
 				return response, "DELETED", nil
 			}
 
