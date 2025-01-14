@@ -49,19 +49,19 @@ type RequestTypeWithMethodAndPathWithoutOptional struct {
 }
 
 type RequestWithMethodAndPath struct {
-	Create *RequestTypeWithMethodAndPath                `json:"create,omitempty"`
-	Read   *RequestTypeWithMethodAndPath                `json:"read"`
-	Update []*RequestTypeWithMethodAndPath              `json:"update"`
-	Delete *RequestTypeWithMethodAndPathWithoutOptional `json:"delete"`
+	Create *RequestTypeWithMethodAndPath   `json:"create,omitempty"`
+	Read   *RequestTypeWithMethodAndPath   `json:"read"`
+	Update []*RequestTypeWithMethodAndPath `json:"update"`
+	Delete *RequestTypeWithMethodAndPath   `json:"delete"`
 }
 
 type RequestWithRefreshObjectName struct {
-	Create RequestTypeWithMethodAndPath                 `json:"create,omitempty"`
-	Read   RequestTypeWithMethodAndPath                 `json:"read"`
-	Update []*RequestTypeWithMethodAndPath              `json:"update"`
-	Delete *RequestTypeWithMethodAndPathWithoutOptional `json:"delete"`
-	Name   string                                       `json:"name"`
-	Id     string                                       `json:"id"`
+	Create RequestTypeWithMethodAndPath    `json:"create,omitempty"`
+	Read   RequestTypeWithMethodAndPath    `json:"read"`
+	Update []*RequestTypeWithMethodAndPath `json:"update"`
+	Delete *RequestTypeWithMethodAndPath   `json:"delete"`
+	Name   string                          `json:"name"`
+	Id     string                          `json:"id"`
 }
 
 type RequestTypeWithRefreshObjectName struct {
