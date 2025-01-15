@@ -445,24 +445,68 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 
 	for _, val := range targetResourceRequest.Create.RequestBody.Optional {
 
-		// TODO - Check types and cast it to right type
-		// in case of int64 : use strconv.Itoa(int())
-		// in case of bool : use strconv.FormatBool()
-		createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
-		if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-			reqParams.%[1]s = plan.%[1]s.ValueString()
-		}`, util.FirstAlphabetToUpperCase(val)) + "\n"
+		switch val.Type {
+		case "string":
+			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "integer":
+			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "boolean":
+			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "array":
+			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+		// Array and Object are treated as string with serialization
+		default:
+			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		}
 	}
 
 	for _, val := range targetResourceRequest.Update[0].RequestBody.Optional {
 
-		// TODO - Check types and cast it to right type
-		// in case of int64 : use strconv.Itoa(int())
-		// in case of bool : use strconv.FormatBool()
-		updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
-		if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-			reqParams.%[1]s = plan.%[1]s.ValueString()
-		}`, util.FirstAlphabetToUpperCase(val)) + "\n"
+		switch val.Type {
+		case "string":
+			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "integer":
+			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "boolean":
+			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "array":
+			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+		// Array and Object are treated as string with serialization
+		default:
+			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		}
 	}
 
 	t.funcMap = funcMap
@@ -583,7 +627,7 @@ func makeIdGetter(target string) string {
 
 	for idx, val := range parts {
 		if idx == len(parts)-1 {
-			s = s + fmt.Sprintf(`["%s"].(string)`, util.ToCamelCase(val))
+			s = s + fmt.Sprintf(`["%s"].(string)`, util.ToPascalCase(util.ToCamelCase(val)))
 			continue
 		}
 
