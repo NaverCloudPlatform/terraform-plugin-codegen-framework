@@ -10,6 +10,7 @@
 		ReadMethodName    string
 		ReadReqBody       string
 		IdGetter          string
+		RefreshWithResponse string
  * ================================================================================= */
 
 package {{.PackageName}}
@@ -52,6 +53,7 @@ func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(
 
 	// Fill required attributes
 	ncloudsdk.Copy(&postPlan, response)
+	{{.RefreshWithResponse}}
 
 	*a = postPlan
 }
@@ -72,6 +74,7 @@ func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(diagnosti
 
 	// Fill required attributes
 	ncloudsdk.Copy(&postPlan, response)
+	{{.RefreshWithResponse}}
 
 	*a = postPlan
 }
