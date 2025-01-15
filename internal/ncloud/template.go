@@ -367,12 +367,12 @@ func (t *Template) RenderTest() []byte {
 }
 
 type RequestType struct {
-	Parameters  []string                 `json:"parameters,omitempty"`
-	RequestBody *RequestBodyWithOptional `json:"request_body,omitempty"`
-	Response    string                   `json:"response,omitempty"`
+	Parameters  []string             `json:"parameters,omitempty"`
+	RequestBody *OptionalRequestBody `json:"request_body,omitempty"`
+	Response    string               `json:"response,omitempty"`
 }
 
-type RequestBodyWithOptional struct {
+type OptionalRequestBody struct {
 	Name     string   `json:"name,omitempty"`
 	Required []string `json:"required,omitempty"`
 	Optional []string `json:"optional,omitempty"`
@@ -390,7 +390,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	var createOpOptionalParam string
 	var updateOpOptionalParam string
 	var importStateOverride string
-	var targetResourceRequest util.RequestWithRefreshObjectName
+	var targetResourceRequest util.RequestRefreshObjectName
 
 	t := &Template{
 		spec:         spec,

@@ -7,48 +7,48 @@ import (
 	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
 )
 
-type RequestTypeWithOptional struct {
-	Parameters  []string                 `json:"parameters,omitempty"`
-	RequestBody *RequestBodyWithOptional `json:"request_body,omitempty"`
-	Response    string                   `json:"response,omitempty"`
+type OptionalRequestType struct {
+	Parameters  []string             `json:"parameters,omitempty"`
+	RequestBody *OptionalRequestBody `json:"request_body,omitempty"`
+	Response    string               `json:"response,omitempty"`
 }
 
-type RequestBodyWithOptional struct {
-	Name     string                        `json:"name,omitempty"`
-	Required []string                      `json:"required,omitempty"`
-	Optional []*OptioanlParamsWithTypeInfo `json:"optional,omitempty"`
+type OptionalRequestBody struct {
+	Name     string                   `json:"name,omitempty"`
+	Required []string                 `json:"required,omitempty"`
+	Optional []*RequestParametersInfo `json:"optional,omitempty"`
 }
 
-type OptioanlParamsWithTypeInfo struct {
+type RequestParametersInfo struct {
 	Name   string `json:"name,omitempty"`
 	Type   string `json:"type,omitempty"`
 	Format string `json:"format,omitempty"`
 }
 
-type RequestTypeWithMethodAndPath struct {
-	RequestTypeWithOptional
+type RequestTypeMethodAndPath struct {
+	OptionalRequestType
 	Method string `json:"method"`
 	Path   string `json:"path"`
 }
 
-type RequestWithMethodAndPath struct {
-	Create RequestTypeWithMethodAndPath    `json:"create,omitempty"`
-	Read   RequestTypeWithMethodAndPath    `json:"read"`
-	Update []*RequestTypeWithMethodAndPath `json:"update"`
-	Delete RequestTypeWithMethodAndPath    `json:"delete"`
+type RequestMethodAndPath struct {
+	Create RequestTypeMethodAndPath    `json:"create,omitempty"`
+	Read   RequestTypeMethodAndPath    `json:"read"`
+	Update []*RequestTypeMethodAndPath `json:"update"`
+	Delete RequestTypeMethodAndPath    `json:"delete"`
 }
 
-type RequestWithRefreshObjectName struct {
-	Create RequestTypeWithMethodAndPath     `json:"create,omitempty"`
-	Read   RequestTypeWithRefreshObjectName `json:"read"`
-	Update []*RequestTypeWithMethodAndPath  `json:"update"`
-	Delete RequestTypeWithMethodAndPath     `json:"delete"`
-	Name   string                           `json:"name"`
-	Id     string                           `json:"id"`
+type RequestRefreshObjectName struct {
+	Create RequestTypeMethodAndPath     `json:"create,omitempty"`
+	Read   RequestTypeRefreshObjectName `json:"read"`
+	Update []*RequestTypeMethodAndPath  `json:"update"`
+	Delete RequestTypeMethodAndPath     `json:"delete"`
+	Name   string                       `json:"name"`
+	Id     string                       `json:"id"`
 }
 
-type RequestTypeWithRefreshObjectName struct {
-	RequestTypeWithMethodAndPath
+type RequestTypeRefreshObjectName struct {
+	RequestTypeMethodAndPath
 	Response string `json:"response"`
 }
 
@@ -59,10 +59,10 @@ type NcloudProvider struct {
 
 type NcloudSpecification struct {
 	spec.Specification
-	Provider    *NcloudProvider                `json:"provider"`
-	Requests    []RequestWithRefreshObjectName `json:"requests"`
-	Resources   []Resource                     `json:"resources"`
-	DataSources []DataSource                   `json:"datasources"`
+	Provider    *NcloudProvider            `json:"provider"`
+	Requests    []RequestRefreshObjectName `json:"requests"`
+	Resources   []Resource                 `json:"resources"`
+	DataSources []DataSource               `json:"datasources"`
 }
 
 type Resource struct {
