@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func (plan *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(diagnostics *diag.Diagnostics, id string) {
+func (plan *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(ctx context.Context, diagnostics *diag.Diagnostics, id string) {
 
 	c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
 
@@ -33,7 +33,7 @@ func (plan *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(diagno
 
 	{{.ReadOpOptionalParams}}
 
-	response, err := c.{{.ReadMethodName}}_TF(r)
+	response, err := c.{{.ReadMethodName}}_TF(ctx, r)
 
 	if err != nil {
 		 diagnostics.AddError("CREATING ERROR", err.Error())

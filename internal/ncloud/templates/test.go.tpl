@@ -67,7 +67,7 @@ func testAccCheck{{.ResourceName | ToLowerCase}}Exists(n string, provider *schem
 
 		c := ncloudsdk.NewClient("https://apigateway.apigw.ntruss.com/api/v1", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
 
-		response, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
+		response, err := c.{{.ReadMethodName}}_TF(context.Background(), &ncloudsdk.{{.ReadMethodName}}Request{
             // change value with "resource.Primary.ID"
             {{.ReadReqBodyForCheckExist}}
 		})
@@ -89,7 +89,7 @@ func testAccCheck{{.ResourceName | ToPascalCase}}Destroy(s *terraform.State) err
 		}
 
 		c := ncloudsdk.NewClient("https://apigateway.apigw.ntruss.com/api/v1", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
-		_, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
+		_, err := c.{{.ReadMethodName}}_TF(context.Background(), &ncloudsdk.{{.ReadMethodName}}Request{
             // change value with "rs.Primary.ID"
             {{.ReadReqBodyForCheckDestroy}}
 		})

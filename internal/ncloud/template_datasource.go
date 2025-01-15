@@ -223,7 +223,7 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestWit
 		case "string":
 			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
+				r.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
 				return err
 			}
@@ -231,7 +231,7 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestWit
 		case "integer":
 			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
+				r.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
 				return err
 			}
@@ -239,7 +239,7 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestWit
 		case "boolean":
 			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
+				r.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
 				return err
 			}
@@ -247,7 +247,7 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestWit
 		case "array":
 			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
+				r.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
 				return err
 			}
