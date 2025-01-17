@@ -52,7 +52,6 @@ func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(
 	}
 
 	// Fill required attributes
-	ncloudsdk.Copy(&postPlan, response)
 	{{.RefreshWithResponse}}
 
 	*a = postPlan
@@ -73,7 +72,6 @@ func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(diagnosti
 	var postPlan {{.RefreshObjectName | ToPascalCase}}Model
 
 	// Fill required attributes
-	ncloudsdk.Copy(&postPlan, response)
 	{{.RefreshWithResponse}}
 
 	*a = postPlan
