@@ -9,6 +9,7 @@ import (
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
 	"github.com/hashicorp/terraform-plugin-codegen-spec/datasource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 )
 
 type DataSourceTemplate struct {
@@ -27,6 +28,7 @@ type DataSourceTemplate struct {
 	readMethodName       string
 	readOpOptionalParams string
 	idGetter             string
+	configParams         string
 	funcMap              template.FuncMap
 }
 
@@ -161,7 +163,31 @@ func (d *DataSourceTemplate) RenderRefresh() []byte {
 
 // RenderTest implements BaseTemplate.
 func (d *DataSourceTemplate) RenderTest() []byte {
-	panic("Unimplemented yet.")
+	var b bytes.Buffer
+
+	testTemplate, err := template.New("").Funcs(d.funcMap).Parse(TestTemplateDataSource)
+	if err != nil {
+		log.Fatalf("error occurred with baseTemplate at rendering test: %v", err)
+	}
+
+	data := struct {
+		ProviderName   string
+		DataSourceName string
+		PackageName    string
+		ConfigParams   string
+	}{
+		ProviderName:   d.providerName,
+		DataSourceName: d.dataSourceName,
+		PackageName:    d.packageName,
+		ConfigParams:   d.configParams,
+	}
+
+	err = testTemplate.ExecuteTemplate(&b, "Test_DataSource", data)
+	if err != nil {
+		log.Fatalf("error occurred with Generating Test: %v", err)
+	}
+
+	return b.Bytes()
 }
 
 // RenderUpdate implements BaseTemplate.
@@ -202,6 +228,7 @@ func NewDataSources(spec *util.NcloudSpecification, datasourceName, packageName 
 		log.Fatalf("error occurred with MakeDataSourceReadOperationLogics: %v", err)
 	}
 
+	d.configParams = MakeDataSourceTestTFConfig(targetResourceRequest.Read.Parameters)
 	b = d
 	return b
 }
@@ -291,4 +318,20 @@ func makeDataSourceIndividualValues(d *DataSourceTemplate, spec *util.NcloudSpec
 
 	d.model = model
 	return nil
+}
+
+func MakeDataSourceTestTFConfig(readParams *util.ParameterWithOptional) string {
+	var t strings.Builder
+
+	for _, val := range readParams.Required {
+		t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val.Name), "tf-"+acctest.RandString(5)) + "\n")
+	}
+
+	if readParams.Optional != nil {
+		for _, val := range readParams.Optional {
+			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name)), "tf-"+acctest.RandString(5)) + "\n")
+		}
+	}
+
+	return t.String()
 }

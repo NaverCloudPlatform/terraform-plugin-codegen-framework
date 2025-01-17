@@ -45,3 +45,6 @@ var ModelTemplateDataSource string
 
 //go:embed templates/refresh_datasource.go.tpl
 var RefreshTemplateDataSource string
+
+//go:embed templates/test_datasource.go.tpl
+var TestTemplateDataSource string
