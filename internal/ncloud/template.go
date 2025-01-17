@@ -390,7 +390,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	var createOpOptionalParam string
 	var updateOpOptionalParam string
 	var importStateOverride string
-	var targetResourceRequest util.RequestRefreshObjectName
+	var targetResourceRequest util.RequestInfo
 
 	t := &Template{
 		spec:         spec,
