@@ -467,7 +467,20 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 	if targetResourceRequest.Create.RequestBody != nil {
 
 		for _, val := range targetResourceRequest.Create.RequestBody.Required {
-			createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			switch val.Type {
+			case "string":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "integer":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "number":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "boolean":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+			}
 		}
 
 		if targetResourceRequest.Create.RequestBody.Optional != nil {
@@ -479,16 +492,25 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 						reqParams.%[1]s = plan.%[1]s.ValueString()
 					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
 				case "integer":
 					createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 						reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
 					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "number":
+					createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueFloat64()))
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
 				case "boolean":
 					createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 						reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
 					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
 				case "array":
 					createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
@@ -510,7 +532,21 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 	if targetResourceRequest.Read.Parameters != nil {
 
 		for _, val := range targetResourceRequest.Read.Parameters.Required {
-			readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			switch val.Type {
+			case "string":
+				readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "integer":
+				readReqBody = readReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "number":
+				readReqBody = readReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "boolean":
+				readReqBody = readReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+			}
+
 			readReqBodyForCheckExist = readReqBodyForCheckExist + fmt.Sprintf(`		%[1]s: resource.Primary.Attributes["%[2]s"],`, util.PathToPascal(val.Name), util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name))) + "\n"
 			readReqBodyForCheckDestroy = readReqBodyForCheckDestroy + fmt.Sprintf(`		%[1]s: rs.Primary.Attributes["%[2]s"],`, util.PathToPascal(val.Name), util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name))) + "\n"
 		}
@@ -553,19 +589,57 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 
 	if targetResourceRequest.Create.Parameters != nil {
 		for _, val := range targetResourceRequest.Create.Parameters.Required {
-			createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+			switch val.Type {
+			case "string":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "integer":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "number":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "boolean":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Formatbool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+			}
 		}
 	}
 
 	if len(targetResourceRequest.Update) > 0 {
 		if targetResourceRequest.Update[0].Parameters != nil {
 			for _, val := range targetResourceRequest.Update[0].Parameters.Required {
+				switch val.Type {
+				case "string":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+				case "integer":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+				case "number":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+				case "boolean":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+				}
 				updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 			}
 		}
 
 		if targetResourceRequest.Update[0].RequestBody != nil {
 			for _, val := range targetResourceRequest.Update[0].RequestBody.Required {
+				switch val.Type {
+				case "string":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "integer":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "number":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "boolean":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+				}
 				updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 			}
 		}
@@ -578,16 +652,25 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 					reqParams.%[1]s = plan.%[1]s.ValueString()
 				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
 			case "integer":
 				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 					reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
 				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "number":
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueFloat64()))
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
 			case "boolean":
 				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 					reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
 				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
 			case "array":
 				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
@@ -613,7 +696,19 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 
 	if targetResourceRequest.Delete.Parameters != nil {
 		for _, val := range targetResourceRequest.Delete.Parameters.Required {
-			deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+			switch val.Type {
+			case "string":
+				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "integer":
+				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "number":
+				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "boolean":
+				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+			}
 		}
 	}
 
@@ -789,6 +884,16 @@ func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) stri
 					return
 				}
 				postPlan.%[3]s = types.Int64Value(int64(tempVal))
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.Float64 != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				tempVal, err := strconv.ParseFloat(response.%[2]s.Attributes()["%[1]s"].String(), 64)
+				if err != nil {
+					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to float64: %v", err))
+					return
+				}
+				postPlan.%[3]s = types.Float64Value(tempVal)
 			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
 		} else if val.List != nil {
 			s.WriteString(fmt.Sprintf(`
