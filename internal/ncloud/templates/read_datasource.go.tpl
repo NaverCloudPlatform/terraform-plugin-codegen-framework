@@ -7,7 +7,7 @@
 func (a *{{.DataSourceName | ToCamelCase}}DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var plan {{.RefreshObjectName | ToPascalCase}}Model
 
-	resp.Diagnostics.Append(req.State.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
