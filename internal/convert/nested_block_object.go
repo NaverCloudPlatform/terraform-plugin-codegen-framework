@@ -14,7 +14,6 @@ import (
 type NestedBlockObject struct {
 	attributes schema.GeneratorAttributes
 	blocks     schema.GeneratorBlocks
-	customType CustomTypeNestedObject
 	validators Validators
 }
 
@@ -24,7 +23,6 @@ func NewNestedBlockObject(a schema.GeneratorAttributes, b schema.GeneratorBlocks
 	return NestedBlockObject{
 		attributes: a,
 		blocks:     b,
-		customType: NewCustomTypeNestedObject(c, name),
 		validators: v,
 	}
 }
@@ -38,17 +36,11 @@ func (n NestedBlockObject) Equal(other NestedBlockObject) bool {
 		return false
 	}
 
-	if !n.customType.Equal(other.customType) {
-		return false
-	}
-
 	return n.validators.Equal(other.validators)
 }
 
 func (n NestedBlockObject) Imports() *schema.Imports {
 	imports := schema.NewImports()
-
-	imports.Append(n.customType.Imports())
 
 	imports.Append(n.validators.Imports())
 
@@ -85,7 +77,6 @@ func (n NestedBlockObject) Schema() ([]byte, error) {
 		b.WriteString(blocksSchema)
 		b.WriteString("\n},\n")
 	}
-	b.Write(n.customType.Schema())
 	b.Write(n.validators.Schema())
 	b.WriteString("},\n")
 
