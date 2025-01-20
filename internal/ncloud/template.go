@@ -578,7 +578,7 @@ func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) stri
 			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
 				tempVal, err := strconv.ParseBool(response.%[2]s.Attributes()["%[1]s"].String())
 				if err != nil {
-					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to bool: %v", err))
+					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to bool: \%v", err))
 					return
 				}
 				postPlan.%[3]s = types.BoolValue(tempVal)
@@ -588,7 +588,7 @@ func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) stri
 			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
 				tempVal, err := strconv.Atoi(response.%[2]s.Attributes()["%[1]s"].String())
 				if err != nil {
-					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to int: %v", err))
+					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to int: \%v", err))
 					return
 				}
 				postPlan.%[3]s = types.Int64Value(int64(tempVal))
