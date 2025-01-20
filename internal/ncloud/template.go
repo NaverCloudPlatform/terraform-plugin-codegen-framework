@@ -13,13 +13,40 @@ import (
 )
 
 // To generate actual data, extract data from config.yml and code-spec.json, and render code for each receiver based on that data.
-// New(): Extracts the data Required for code generation. Currently, it extracts data from config.yml and code-spec.json, but it is planned to unify everything into code-spec.json in the future.
-// RenderInitial(): Generates small code blocks Required initially.
-// RenderCreate(): Generates the Create function.
-// RenderRead(): Generates the Read function.
-// RenderUpdate(): Generates the Update function.
-// RenderDelete(): Generates the Delete function.
-// Calculates the necessary data during initialization and performs rendering for each method.
+type BaseTemplate interface {
+
+	// RenderInitial generates small code blocks needed initially.
+	RenderInitial() []byte
+
+	// RenderCreate generates the Create function.
+	RenderCreate() []byte
+
+	// RenderRead generates the Read function.
+	RenderRead() []byte
+
+	// RenderUpdate generates the Update function.
+	RenderUpdate() []byte
+
+	// RenderDelete generates the Delete function.
+	RenderDelete() []byte
+
+	// RenderModel generates the model.
+	RenderModel() []byte
+
+	// RenderRefresh generates the Refresh function.
+	RenderRefresh() []byte
+
+	// RenderWait generates the Waiting Logic.
+	// Will be Rendered in refresh file.
+	RenderWait() []byte
+
+	// RenderTest generates the Test logic.
+	RenderTest() []byte
+
+	// RenderImportState generates the ImportState function.
+	RenderImportState() []byte
+}
+
 type Template struct {
 	spec                       util.NcloudSpecification
 	providerName               string
@@ -49,12 +76,13 @@ type Template struct {
 	deleteMethodName           string
 	idGetter                   string
 	funcMap                    template.FuncMap
-	createOpOptionalParam      string
-	updateOpOptionalParam      string
 	configParams               string
 	readReqBodyForCheckExist   string
 	readReqBodyForCheckDestroy string
- 	isUpdateExists             bool
+	isUpdateExists             bool
+	createOpOptionalParams     string
+	updateOpOptionalParams     string
+	readOpOptionalParams       string
 }
 
 func (t *Template) RenderInitial() []byte {
@@ -127,7 +155,7 @@ func (t *Template) RenderCreate() []byte {
 		ResourceName:           t.resourceName,
 		RefreshObjectName:      t.refreshObjectName,
 		CreateReqBody:          t.createReqBody,
-		CreateReqOptionalParam: t.createOpOptionalParam,
+		CreateReqOptionalParam: t.createOpOptionalParams,
 		CreateMethod:           t.createMethod,
 		CreateMethodName:       t.createMethodName,
 		Endpoint:               t.endpoint,
@@ -177,10 +205,10 @@ func (t *Template) RenderUpdate() []byte {
 
 	data := struct {
 		IsUpdateExists         bool
- 		ResourceName           string
+		ResourceName           string
 		RefreshObjectName      string
 		UpdateReqBody          string
-		UpdateReqOptioanlParam string
+		UpdateReqOptionalParam string
 		UpdateMethod           string
 		UpdateMethodName       string
 		Endpoint               string
@@ -191,7 +219,7 @@ func (t *Template) RenderUpdate() []byte {
 		ResourceName:           t.resourceName,
 		RefreshObjectName:      t.refreshObjectName,
 		UpdateReqBody:          t.updateReqBody,
-		UpdateReqOptioanlParam: t.updateOpOptionalParam,
+		UpdateReqOptionalParam: t.updateOpOptionalParams,
 		UpdateMethod:           t.updateMethod,
 		UpdateMethodName:       t.updateMethodName,
 		Endpoint:               t.endpoint,
@@ -391,8 +419,9 @@ type OptionalRequestBody struct {
 	Optional []string `json:"optional,omitempty"`
 }
 
-// Allocate prerequisite values
-func New(spec util.NcloudSpecification, resourceName, packageName string) *Template {
+// Extracts the data needed for code generation. Currently, it extracts data from config.yml and code-spec.json, but it is planned to unify everything into code-spec.json in the future.
+func NewResource(spec util.NcloudSpecification, resourceName, packageName string) BaseTemplate {
+	var b BaseTemplate
 	var refreshObjectName string
 	var id string
 	var attributes resource.Attributes
@@ -402,8 +431,9 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	var readReqBodyForCheckExist string
 	var readReqBodyForCheckDestroy string
 	var deleteReqBody string
-	var createOpOptionalParam string
-	var updateOpOptionalParam string
+	var createOpOptionalParams string
+	var updateOpOptionalParams string
+	var readOpOptionalParams string
 	var importStateOverride string
 	var targetResourceRequest util.RequestInfo
 
@@ -434,66 +464,296 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 		log.Fatalf("error occurred with Gen_ConvertOAStoTFTypes: %v", err)
 	}
 
-	for _, val := range targetResourceRequest.Create.RequestBody.Required {
-		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val), util.FirstAlphabetToUpperCase(val)) + "\n"
+	if targetResourceRequest.Create.RequestBody != nil {
+
+		for _, val := range targetResourceRequest.Create.RequestBody.Required {
+
+			switch val.Type {
+			case "string":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "integer":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "number":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "boolean":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+			}
+		}
+
+		if targetResourceRequest.Create.RequestBody.Optional != nil {
+			for _, val := range targetResourceRequest.Create.RequestBody.Optional {
+
+				switch val.Type {
+				case "string":
+					createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = plan.%[1]s.ValueString()
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "integer":
+					createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "number":
+					createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueFloat64()))
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "boolean":
+					createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "array":
+					createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = plan.%[1]s.ValueString()
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				// Array and Object are treated as string with serialization
+				default:
+					createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = plan.%[1]s.ValueString()
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+				}
+			}
+		}
+
 	}
 
-	for _, val := range targetResourceRequest.Read.Parameters {
-		readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
-		readReqBodyForCheckExist = readReqBodyForCheckExist + fmt.Sprintf(`		%[1]s: resource.Primary.Attributes["%[2]s"],`, util.PathToPascal(val), util.FirstAlphabetToLowerCase(util.PathToPascal(val))) + "\n"
-		readReqBodyForCheckDestroy = readReqBodyForCheckDestroy + fmt.Sprintf(`		%[1]s: rs.Primary.Attributes["%[2]s"],`, util.PathToPascal(val), util.FirstAlphabetToLowerCase(util.PathToPascal(val))) + "\n"
+	if targetResourceRequest.Read.Parameters != nil {
+
+		for _, val := range targetResourceRequest.Read.Parameters.Required {
+
+			switch val.Type {
+			case "string":
+				readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "integer":
+				readReqBody = readReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "number":
+				readReqBody = readReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "boolean":
+				readReqBody = readReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+			}
+
+			readReqBodyForCheckExist = readReqBodyForCheckExist + fmt.Sprintf(`		%[1]s: resource.Primary.Attributes["%[2]s"],`, util.PathToPascal(val.Name), util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name))) + "\n"
+			readReqBodyForCheckDestroy = readReqBodyForCheckDestroy + fmt.Sprintf(`		%[1]s: rs.Primary.Attributes["%[2]s"],`, util.PathToPascal(val.Name), util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name))) + "\n"
+		}
+
+		if targetResourceRequest.Read.Parameters.Optional != nil {
+			for _, val := range targetResourceRequest.Read.Parameters.Optional {
+
+				switch val.Type {
+				case "string":
+					readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = plan.%[1]s.ValueString()
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+				case "integer":
+					readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+				case "boolean":
+					readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+				case "array":
+					readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = plan.%[1]s.ValueString()
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+					// Array and Object are treated as string with serialization
+				default:
+					readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = plan.%[1]s.ValueString()
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+				}
+			}
+		}
 	}
 
-	for _, val := range targetResourceRequest.Create.Parameters {
-		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+	if targetResourceRequest.Create.Parameters != nil {
+		for _, val := range targetResourceRequest.Create.Parameters.Required {
+			switch val.Type {
+			case "string":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "integer":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "number":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "boolean":
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Formatbool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+			}
+		}
 	}
 
-	for _, val := range targetResourceRequest.Delete.Parameters {
-		deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+	if len(targetResourceRequest.Update) > 0 {
+		if targetResourceRequest.Update[0].Parameters != nil {
+			for _, val := range targetResourceRequest.Update[0].Parameters.Required {
+				switch val.Type {
+				case "string":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+				case "integer":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+				case "number":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+				case "boolean":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+				}
+				updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+			}
+		}
+
+		if targetResourceRequest.Update[0].RequestBody != nil {
+			for _, val := range targetResourceRequest.Update[0].RequestBody.Required {
+				switch val.Type {
+				case "string":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "integer":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "number":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+				case "boolean":
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+				}
+				updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+			}
+		}
+
+		for _, val := range targetResourceRequest.Update[0].RequestBody.Optional {
+
+			switch val.Type {
+			case "string":
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "integer":
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "number":
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueFloat64()))
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "boolean":
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			case "array":
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+			// Array and Object are treated as string with serialization
+			default:
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+			}
+		}
+
+		t.isUpdateExists = true
+		t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
+		t.updateMethod = targetResourceRequest.Update[0].Method
+		t.updateReqBody = updateReqBody
+		t.updateOpOptionalParams = updateOpOptionalParams
+		t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
+	}
+
+	if targetResourceRequest.Delete.Parameters != nil {
+		for _, val := range targetResourceRequest.Delete.Parameters.Required {
+			switch val.Type {
+			case "string":
+				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "integer":
+				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueInt64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "number":
+				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+
+			case "boolean":
+				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+			}
+		}
 	}
 
 	if len(targetResourceRequest.Update) > 0 {
 		for _, val := range targetResourceRequest.Update[0].RequestBody.Required {
-			updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val), util.FirstAlphabetToUpperCase(val)) + "\n"
+			updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		}
 
-		for _, val := range targetResourceRequest.Update[0].Parameters {
-			updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+		for _, val := range targetResourceRequest.Update[0].Parameters.Required {
+			updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 		}
 
 		t.isUpdateExists = true
 		t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
 		t.updateMethod = targetResourceRequest.Update[0].Method
 		t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
-  }
-  
+	}
+
 	for _, val := range targetResourceRequest.Create.RequestBody.Optional {
 
-    switch val.Type {
+		switch val.Type {
 		case "string":
-			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "integer":
-			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "boolean":
-			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "array":
-			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 
-    // Array and Object are treated as string with serialization
+			// Array and Object are treated as string with serialization
 		default:
-			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			createOpOptionalParams = createOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
@@ -502,31 +762,31 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 
 	for _, val := range targetResourceRequest.Update[0].RequestBody.Optional {
 
-    switch val.Type {
+		switch val.Type {
 		case "string":
-			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "integer":
-			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "boolean":
-			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 		case "array":
-			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 
 		// Array and Object are treated as string with serialization
 		default:
-			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
@@ -537,7 +797,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	t.providerName = spec.Provider.Name
 	t.packageName = packageName
 	t.refreshObjectName = refreshObjectName
-	t.importStateLogic = MakeImportStateLogic(importStateOverride)
+	t.importStateLogic = makeImportStateLogic(importStateOverride)
 	t.model = model
 	t.refreshLogic = refreshLogic
 	t.refreshWithResponse = MakeRefreshFromResponse(attributes, resourceName)
@@ -550,19 +810,20 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	t.readMethod = targetResourceRequest.Read.Method
 	t.createMethod = targetResourceRequest.Create.Method
 	t.createReqBody = createReqBody
-	t.updateReqBody = updateReqBody
 	t.readReqBody = readReqBody
 	t.deleteReqBody = deleteReqBody
 	t.readReqBodyForCheckExist = readReqBodyForCheckExist
 	t.readReqBodyForCheckDestroy = readReqBodyForCheckDestroy
-	t.createOpOptionalParam = createOpOptionalParam
-	t.updateOpOptionalParam = updateOpOptionalParam
+	t.createOpOptionalParams = createOpOptionalParams
+	t.readOpOptionalParams = readOpOptionalParams
 	t.createMethodName = strings.ToUpper(targetResourceRequest.Create.Method) + getMethodName(targetResourceRequest.Create.Path)
 	t.readMethodName = strings.ToUpper(targetResourceRequest.Read.Method) + getMethodName(targetResourceRequest.Read.Path)
 	t.deleteMethodName = strings.ToUpper(targetResourceRequest.Delete.Method) + getMethodName(targetResourceRequest.Delete.Path)
 	t.idGetter = makeIdGetter(id)
 
-	return t
+	b = t
+
+	return b
 }
 
 func getMethodName(s string) string {
@@ -661,7 +922,7 @@ func makeIdGetter(target string) string {
 	return s
 }
 
-func MakeImportStateLogic(target string) string {
+func makeImportStateLogic(target string) string {
 	parts := strings.Split(target, ".")
 
 	if len(parts) < 2 {
@@ -705,6 +966,16 @@ func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) stri
 				}
 				postPlan.%[3]s = types.Int64Value(int64(tempVal))
 			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.Float64 != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				tempVal, err := strconv.ParseFloat(response.%[2]s.Attributes()["%[1]s"].String(), 64)
+				if err != nil {
+					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to float64: %v", err))
+					return
+				}
+				postPlan.%[3]s = types.Float64Value(tempVal)
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
 		} else if val.List != nil {
 			s.WriteString(fmt.Sprintf(`
 			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
@@ -741,15 +1012,17 @@ func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) stri
 	return s.String()
 }
 
-func MakeTestTFConfig(requiredCreateParams, createPathParams []string) string {
+func MakeTestTFConfig(requiredCreateParams []*util.RequestParametersInfo, createPathParams *util.RequestParameters) string {
 	var t strings.Builder
 
 	for _, val := range requiredCreateParams {
-		t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val), "tf-"+acctest.RandString(5)) + "\n")
+		t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val.Name), "tf-"+acctest.RandString(5)) + "\n")
 	}
 
-	for _, val := range createPathParams {
-		t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, util.FirstAlphabetToLowerCase(util.PathToPascal(val)), "tf-"+acctest.RandString(5)) + "\n")
+	if createPathParams != nil {
+		for _, val := range createPathParams.Required {
+			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name)), "tf-"+acctest.RandString(5)) + "\n")
+		}
 	}
 
 	return t.String()

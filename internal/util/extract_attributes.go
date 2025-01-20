@@ -19,25 +19,40 @@ type RequestParametersInfo struct {
 	Format string `json:"format,omitempty"`
 }
 
-type IndividualOperationInfo struct {
-	Parameters  []string             `json:"parameters,omitempty"`
-	RequestBody *OptionalRequestBody `json:"request_body,omitempty"`
-	Response    string               `json:"response,omitempty"`
-	Method      string               `json:"method,omitempty"`
-	Path        string               `json:"path,omitempty"`
+type NcloudCommonRequestType struct {
+	DetailedRequestType
+	Method string `json:"method,omitempty"`
+	Path   string `json:"path,omitempty"`
 }
 
 type CrudParameters struct {
-	Create IndividualOperationInfo    `json:"create,omitempty"`
-	Read   IndividualOperationInfo    `json:"read"`
-	Update []*IndividualOperationInfo `json:"update"`
-	Delete IndividualOperationInfo    `json:"delete"`
+	Create NcloudCommonRequestType    `json:"create,omitempty"`
+	Read   NcloudCommonRequestType    `json:"read"`
+	Update []*NcloudCommonRequestType `json:"update"`
+	Delete NcloudCommonRequestType    `json:"delete"`
 }
 
 type RequestInfo struct {
 	CrudParameters
 	Name string `json:"name"`
 	Id   string `json:"id"`
+}
+
+type RequestParameters struct {
+	Required []*RequestParametersInfo `json:"required,omitempty"`
+	Optional []*RequestParametersInfo `json:"optional,omitempty"`
+}
+
+type DetailedRequestType struct {
+	spec.RequestType
+	Parameters  *RequestParameters `json:"parameters,omitempty"`
+	RequestBody *NcloudRequestBody `json:"request_body,omitempty"`
+}
+
+type NcloudRequestBody struct {
+	spec.RequestBody
+	Required []*RequestParametersInfo `json:"required,omitempty"`
+	Optional []*RequestParametersInfo `json:"optional,omitempty"`
 }
 
 type NcloudProvider struct {
