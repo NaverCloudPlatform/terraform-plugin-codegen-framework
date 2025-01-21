@@ -20,33 +20,34 @@ import (
 // RenderDelete(): Generates the Delete function.
 // Calculates the necessary data during initialization and performs rendering for each method.
 type Template struct {
-	spec              util.NcloudSpecification
-	providerName      string
-	resourceName      string
-	packageName       string
-	importStateLogic  string
-	refreshObjectName string
-	model             string
-	refreshLogic      string
-	endpoint          string
-	deletePathParams  string
-	updatePathParams  string
-	readPathParams    string
-	createPathParams  string
-	deleteMethod      string
-	updateMethod      string
-	readMethod        string
-	createMethod      string
-	createReqBody     string
-	updateReqBody     string
-	readReqBody       string
-	deleteReqBody     string
-	createMethodName  string
-	readMethodName    string
-	updateMethodName  string
-	deleteMethodName  string
-	idGetter          string
-	funcMap           template.FuncMap
+	spec                util.NcloudSpecification
+	providerName        string
+	resourceName        string
+	packageName         string
+	importStateLogic    string
+	refreshObjectName   string
+	model               string
+	refreshLogic        string
+	refreshWithResponse string
+	endpoint            string
+	deletePathParams    string
+	updatePathParams    string
+	readPathParams      string
+	createPathParams    string
+	deleteMethod        string
+	updateMethod        string
+	readMethod          string
+	createMethod        string
+	createReqBody       string
+	updateReqBody       string
+	readReqBody         string
+	deleteReqBody       string
+	createMethodName    string
+	readMethodName      string
+	updateMethodName    string
+	deleteMethodName    string
+	idGetter            string
+	funcMap             template.FuncMap
 }
 
 func (t *Template) RenderInitial() []byte {
@@ -262,19 +263,23 @@ func (t *Template) RenderRefresh() []byte {
 	}
 
 	data := struct {
-		PackageName       string
-		RefreshObjectName string
-		Endpoint          string
-		CreateMethodName  string
-		ReadMethodName    string
-		ReadReqBody       string
+		PackageName         string
+		RefreshObjectName   string
+		RefreshWithResponse string
+		Endpoint            string
+		CreateMethodName    string
+		ReadMethodName      string
+		ReadReqBody         string
+		IdGetter            string
 	}{
-		PackageName:       t.packageName,
-		RefreshObjectName: t.refreshObjectName,
-		Endpoint:          t.endpoint,
-		CreateMethodName:  t.createMethodName,
-		ReadMethodName:    t.readMethodName,
-		ReadReqBody:       t.readReqBody,
+		PackageName:         t.packageName,
+		RefreshObjectName:   t.refreshObjectName,
+		RefreshWithResponse: t.refreshWithResponse,
+		Endpoint:            t.endpoint,
+		CreateMethodName:    t.createMethodName,
+		ReadMethodName:      t.readMethodName,
+		ReadReqBody:         t.readReqBody,
+		IdGetter:            t.idGetter,
 	}
 
 	err = refreshTemplate.ExecuteTemplate(&b, "Refresh", data)
@@ -425,6 +430,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	t.importStateLogic = MakeImportStateLogic(importStateOverride)
 	t.model = model
 	t.refreshLogic = refreshLogic
+	t.refreshWithResponse = MakeRefreshFromResponse(attributes, resourceName)
 	t.endpoint = spec.Provider.Endpoint
 	t.deletePathParams = extractPathParams(targetResourceRequest.Delete.Path)
 	t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
@@ -529,7 +535,7 @@ func extractReadPathParams(path string) string {
 
 func makeIdGetter(target string) string {
 	parts := strings.Split(target, ".")
-	s := "response"
+	s := "createRes"
 
 	for idx, val := range parts {
 		if idx == len(parts)-1 {
@@ -556,4 +562,69 @@ func MakeImportStateLogic(target string) string {
 	}
 
 	return s
+}
+
+func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) string {
+	var s strings.Builder
+
+	for _, val := range attr {
+		if val.String != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				postPlan.%[3]s = types.StringValue(response.%[2]s.Attributes()["%[1]s"].String())
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.Bool != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				tempVal, err := strconv.ParseBool(response.%[2]s.Attributes()["%[1]s"].String())
+				if err != nil {
+					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to bool: \%v", err))
+					return
+				}
+				postPlan.%[3]s = types.BoolValue(tempVal)
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.Int64 != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				tempVal, err := strconv.Atoi(response.%[2]s.Attributes()["%[1]s"].String())
+				if err != nil {
+					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to int: \%v", err))
+					return
+				}
+				postPlan.%[3]s = types.Int64Value(int64(tempVal))
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.List != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				listRes, diag := types.ListValueFrom(ctx, postPlan.%[2]s.AttributeTypes(ctx), response.%[2]s)
+				if diag.HasError() {
+					diagnostics.AddError("CONVERSION ERROR", "Error occured while getting object value: %[1]s")
+					return
+				}
+				postPlan.%[3]s = listRes
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.ListNested != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				listRes, diag := types.ListValueFrom(ctx, postPlan.%[2]s.AttributeTypes(ctx), response.%[2]s)
+				if diag.HasError() {
+					diagnostics.AddError("CONVERSION ERROR", "Error occured while getting object value: %[1]s")
+					return
+				}
+				postPlan.%[3]s = listRes
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		} else if val.SingleNested != nil {
+			s.WriteString(fmt.Sprintf(`
+			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
+				objectRes, diag := types.ObjectValueFrom(ctx, postPlan.%[2]s.AttributeTypes(ctx), response.%[2]s)
+				if diag.HasError() {
+					diagnostics.AddError("CONVERSION ERROR", "Error occured while getting object value: %[1]s")
+					return
+				}
+				postPlan.%[3]s = objectRes
+			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
+		}
+	}
+
+	return s.String()
 }

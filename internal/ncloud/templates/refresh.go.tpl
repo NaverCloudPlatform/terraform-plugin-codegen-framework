@@ -9,6 +9,8 @@
 		CreateMethodName  string
 		ReadMethodName    string
 		ReadReqBody       string
+		IdGetter          string
+		RefreshWithResponse string
  * ================================================================================= */
 
 package {{.PackageName}}
@@ -27,7 +29,7 @@ import (
 func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(ctx context.Context, diagnostics *diag.Diagnostics, createRes map[string]interface{}) {
 
 	// Allocate resource id from create response
-	id :=
+	id := {{.IdGetter}}
 
 	// Indicate where to get resource id from create response
 	err := a.waitResourceCreated(ctx, id)
@@ -50,7 +52,7 @@ func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput_createOp(
 	}
 
 	// Fill required attributes
-	ncloudsdk.Copy(&postPlan, response)
+	{{.RefreshWithResponse}}
 
 	*a = postPlan
 }
@@ -70,7 +72,7 @@ func (a *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(diagnosti
 	var postPlan {{.RefreshObjectName | ToPascalCase}}Model
 
 	// Fill required attributes
-	ncloudsdk.Copy(&postPlan, response)
+	{{.RefreshWithResponse}}
 
 	*a = postPlan
 }
