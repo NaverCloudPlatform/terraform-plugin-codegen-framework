@@ -117,6 +117,8 @@ func GenArray(d resource.Attributes, pName string) string {
 			t = t + fmt.Sprintf(`"%[1]s": types.BoolType,`, n) + "\n"
 		} else if val.Int64 != nil {
 			t = t + fmt.Sprintf(`"%[1]s": types.Int64Type,`, n) + "\n"
+		} else if val.Float64 != nil {
+			t = t + fmt.Sprintf(`"%[1]s": types.Float64Type,`, n) + "\n"
 		} else if val.SingleNested != nil {
 			s = s + fmt.Sprintf(`
 			"%[1]s": types.ObjectType{AttrTypes: map[string]attr.Type{
@@ -146,6 +148,8 @@ func GenObject(d resource.Attributes, pName string) string {
 			s = s + fmt.Sprintf(`"%[1]s": types.BoolType,`, n) + "\n"
 		} else if val.Int64 != nil {
 			s = s + fmt.Sprintf(`"%[1]s": types.Int64Type,`, n) + "\n"
+		} else if val.Float64 != nil {
+			s = s + fmt.Sprintf(`"%[1]s": types.Float64Type,`, n) + "\n"
 		} else if val.List != nil {
 			if val.List.ElementType.String != nil {
 				s = s + fmt.Sprintf(`"%[1]s": types.ListType{ElemType: types.StringType},`, n) + "\n"
