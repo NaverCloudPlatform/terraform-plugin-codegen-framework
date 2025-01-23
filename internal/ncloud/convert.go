@@ -6,7 +6,7 @@ import (
 	"unicode"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
 )
 
 // generate converter that convert openapi.json schema to terraform type
@@ -115,8 +115,12 @@ func GenArray(d resource.Attributes, pName string) string {
 			t = t + fmt.Sprintf(`"%[1]s": types.StringType,`, n) + "\n"
 		} else if val.Bool != nil {
 			t = t + fmt.Sprintf(`"%[1]s": types.BoolType,`, n) + "\n"
+		} else if val.Int32 != nil {
+			t = t + fmt.Sprintf(`"%[1]s": types.Int32Type,`, n) + "\n"
 		} else if val.Int64 != nil {
 			t = t + fmt.Sprintf(`"%[1]s": types.Int64Type,`, n) + "\n"
+		} else if val.Float32 != nil {
+			t = t + fmt.Sprintf(`"%[1]s": types.Float32Type,`, n) + "\n"
 		} else if val.Float64 != nil {
 			t = t + fmt.Sprintf(`"%[1]s": types.Float64Type,`, n) + "\n"
 		} else if val.SingleNested != nil {
@@ -146,8 +150,12 @@ func GenObject(d resource.Attributes, pName string) string {
 			s = s + fmt.Sprintf(`"%[1]s": types.StringType,`, n) + "\n"
 		} else if val.Bool != nil {
 			s = s + fmt.Sprintf(`"%[1]s": types.BoolType,`, n) + "\n"
+		} else if val.Int32 != nil {
+			s = s + fmt.Sprintf(`"%[1]s": types.Int32Type,`, n) + "\n"
 		} else if val.Int64 != nil {
 			s = s + fmt.Sprintf(`"%[1]s": types.Int64Type,`, n) + "\n"
+		} else if val.Float32 != nil {
+			s = s + fmt.Sprintf(`"%[1]s": types.Float32Type,`, n) + "\n"
 		} else if val.Float64 != nil {
 			s = s + fmt.Sprintf(`"%[1]s": types.Float64Type,`, n) + "\n"
 		} else if val.List != nil {
