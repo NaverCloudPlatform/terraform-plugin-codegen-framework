@@ -7,35 +7,37 @@ import (
 	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
 )
 
-type RequestTypeWithMethodAndPath struct {
-	spec.RequestType
-	Method string `json:"method"`
-	Path   string `json:"path"`
+type OptionalRequestBody struct {
+	Name     string                   `json:"name,omitempty"`
+	Required []string                 `json:"required,omitempty"`
+	Optional []*RequestParametersInfo `json:"optional,omitempty"`
 }
 
-type RequestWithMethodAndPath struct {
-	Create RequestTypeWithMethodAndPath    `json:"create,omitempty"`
-	Read   RequestTypeWithMethodAndPath    `json:"read"`
-	Update []*RequestTypeWithMethodAndPath `json:"update"`
-	Delete RequestTypeWithMethodAndPath    `json:"delete"`
+type RequestParametersInfo struct {
+	Name   string `json:"name,omitempty"`
+	Type   string `json:"type,omitempty"`
+	Format string `json:"format,omitempty"`
 }
 
-type RequestWithRefreshObjectName struct {
-	Create RequestTypeWithMethodAndPath     `json:"create,omitempty"`
-	Read   RequestTypeWithRefreshObjectName `json:"read"`
-	Update []*RequestTypeWithMethodAndPath  `json:"update"`
-	Delete RequestTypeWithMethodAndPath     `json:"delete"`
-	Name   string                           `json:"name"`
-	Id     string                           `json:"id"`
+type IndividualOperationInfo struct {
+	Parameters  []string             `json:"parameters,omitempty"`
+	RequestBody *OptionalRequestBody `json:"request_body,omitempty"`
+	Response    string               `json:"response,omitempty"`
+	Method      string               `json:"method,omitempty"`
+	Path        string               `json:"path,omitempty"`
 }
 
-type RequestTypeWithRefreshObjectName struct {
-	RequestTypeWithMethodAndPath
-	Response string `json:"response"`
+type CrudParameters struct {
+	Create IndividualOperationInfo    `json:"create,omitempty"`
+	Read   IndividualOperationInfo    `json:"read"`
+	Update []*IndividualOperationInfo `json:"update"`
+	Delete IndividualOperationInfo    `json:"delete"`
 }
 
-type RequestWithResponse struct {
-	Requests []spec.Request
+type RequestInfo struct {
+	CrudParameters
+	Name string `json:"name"`
+	Id   string `json:"id"`
 }
 
 type NcloudProvider struct {
@@ -45,10 +47,10 @@ type NcloudProvider struct {
 
 type NcloudSpecification struct {
 	spec.Specification
-	Provider    *NcloudProvider                `json:"provider"`
-	Requests    []RequestWithRefreshObjectName `json:"requests"`
-	Resources   []Resource                     `json:"resources"`
-	DataSources []DataSource                   `json:"datasources"`
+	Provider    *NcloudProvider `json:"provider"`
+	Requests    []RequestInfo   `json:"requests"`
+	Resources   []Resource      `json:"resources"`
+	DataSources []DataSource    `json:"datasources"`
 }
 
 type Resource struct {
