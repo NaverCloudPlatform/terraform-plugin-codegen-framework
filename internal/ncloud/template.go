@@ -9,6 +9,7 @@ import (
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
 	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 )
 
 // To generate actual data, extract data from config.yml and code-spec.json, and render code for each receiver based on that data.
@@ -20,36 +21,39 @@ import (
 // RenderDelete(): Generates the Delete function.
 // Calculates the necessary data during initialization and performs rendering for each method.
 type Template struct {
-	spec                  util.NcloudSpecification
-	providerName          string
-	resourceName          string
-	packageName           string
-	importStateLogic      string
-	refreshObjectName     string
-	model                 string
-	refreshLogic          string
-	refreshWithResponse   string
-	endpoint              string
-	deletePathParams      string
-	updatePathParams      string
-	readPathParams        string
-	createPathParams      string
-	deleteMethod          string
-	updateMethod          string
-	readMethod            string
-	createMethod          string
-	createReqBody         string
-	updateReqBody         string
-	readReqBody           string
-	deleteReqBody         string
-	createMethodName      string
-	readMethodName        string
-	updateMethodName      string
-	deleteMethodName      string
-	idGetter              string
-	funcMap               template.FuncMap
-	createOpOptionalParam string
-	updateOpOptionalParam string
+	spec                       util.NcloudSpecification
+	providerName               string
+	resourceName               string
+	packageName                string
+	importStateLogic           string
+	refreshObjectName          string
+	model                      string
+	refreshLogic               string
+	refreshWithResponse        string
+	endpoint                   string
+	deletePathParams           string
+	updatePathParams           string
+	readPathParams             string
+	createPathParams           string
+	deleteMethod               string
+	updateMethod               string
+	readMethod                 string
+	createMethod               string
+	createReqBody              string
+	updateReqBody              string
+	readReqBody                string
+	deleteReqBody              string
+	createMethodName           string
+	readMethodName             string
+	updateMethodName           string
+	deleteMethodName           string
+	idGetter                   string
+	funcMap                    template.FuncMap
+	createOpOptionalParam      string
+	updateOpOptionalParam      string
+	configParams               string
+	readReqBodyForCheckExist   string
+	readReqBodyForCheckDestroy string
 }
 
 func (t *Template) RenderInitial() []byte {
@@ -337,25 +341,31 @@ func (t *Template) RenderTest() []byte {
 	}
 
 	data := struct {
-		ProviderName      string
-		ResourceName      string
-		PackageName       string
-		RefreshObjectName string
-		ReadMethod        string
-		ReadMethodName    string
-		ReadReqBody       string
-		Endpoint          string
-		ReadPathParams    string
+		ProviderName               string
+		ResourceName               string
+		PackageName                string
+		RefreshObjectName          string
+		ReadMethod                 string
+		ReadMethodName             string
+		ReadReqBody                string
+		Endpoint                   string
+		ReadPathParams             string
+		ConfigParams               string
+		ReadReqBodyForCheckExist   string
+		ReadReqBodyForCheckDestroy string
 	}{
-		ProviderName:      t.providerName,
-		ResourceName:      t.resourceName,
-		PackageName:       t.packageName,
-		RefreshObjectName: t.refreshObjectName,
-		ReadMethod:        t.readMethod,
-		ReadMethodName:    t.readMethodName,
-		ReadReqBody:       t.readReqBody,
-		Endpoint:          t.endpoint,
-		ReadPathParams:    t.readPathParams,
+		ProviderName:               t.providerName,
+		ResourceName:               t.resourceName,
+		PackageName:                t.packageName,
+		RefreshObjectName:          t.refreshObjectName,
+		ReadMethod:                 t.readMethod,
+		ReadMethodName:             t.readMethodName,
+		ReadReqBody:                t.readReqBody,
+		Endpoint:                   t.endpoint,
+		ReadPathParams:             t.readPathParams,
+		ConfigParams:               t.configParams,
+		ReadReqBodyForCheckExist:   t.readReqBodyForCheckExist,
+		ReadReqBodyForCheckDestroy: t.readReqBodyForCheckDestroy,
 	}
 
 	err = testTemplate.ExecuteTemplate(&b, "Test", data)
@@ -386,6 +396,8 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	var createReqBody string
 	var updateReqBody string
 	var readReqBody string
+	var readReqBodyForCheckExist string
+	var readReqBodyForCheckDestroy string
 	var deleteReqBody string
 	var createOpOptionalParam string
 	var updateOpOptionalParam string
@@ -429,6 +441,8 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 
 	for _, val := range targetResourceRequest.Read.Parameters {
 		readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+		readReqBodyForCheckExist = readReqBodyForCheckExist + fmt.Sprintf(`		%[1]s: resource.Primary.Attributes["%[2]s"],`, util.PathToPascal(val), util.FirstAlphabetToLowerCase(util.PathToPascal(val))) + "\n"
+		readReqBodyForCheckDestroy = readReqBodyForCheckDestroy + fmt.Sprintf(`		%[1]s: rs.Primary.Attributes["%[2]s"],`, util.PathToPascal(val), util.FirstAlphabetToLowerCase(util.PathToPascal(val))) + "\n"
 	}
 
 	for _, val := range targetResourceRequest.Create.Parameters {
@@ -522,6 +536,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
 	t.readPathParams = extractReadPathParams(targetResourceRequest.Read.Path)
 	t.createPathParams = extractPathParams(targetResourceRequest.Create.Path)
+	t.configParams = MakeTestTFConfig(targetResourceRequest.Create.RequestBody.Required, targetResourceRequest.Create.Parameters)
 	t.deleteMethod = targetResourceRequest.Delete.Method
 	t.updateMethod = targetResourceRequest.Update[0].Method
 	t.readMethod = targetResourceRequest.Read.Method
@@ -530,6 +545,8 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	t.updateReqBody = updateReqBody
 	t.readReqBody = readReqBody
 	t.deleteReqBody = deleteReqBody
+	t.readReqBodyForCheckExist = readReqBodyForCheckExist
+	t.readReqBodyForCheckDestroy = readReqBodyForCheckDestroy
 	t.createOpOptionalParam = createOpOptionalParam
 	t.updateOpOptionalParam = updateOpOptionalParam
 	t.createMethodName = strings.ToUpper(targetResourceRequest.Create.Method) + getMethodName(targetResourceRequest.Create.Path)
@@ -715,4 +732,18 @@ func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) stri
 	}
 
 	return s.String()
+}
+
+func MakeTestTFConfig(requiredCreateParams, createPathParams []string) string {
+	var t strings.Builder
+
+	for _, val := range requiredCreateParams {
+		t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val), "tf-"+acctest.RandString(5)) + "\n")
+	}
+
+	for _, val := range createPathParams {
+		t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, util.FirstAlphabetToLowerCase(util.PathToPascal(val)), "tf-"+acctest.RandString(5)) + "\n")
+	}
+
+	return t.String()
 }
