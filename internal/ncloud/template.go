@@ -552,16 +552,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 
 			case "number":
-				if val.Format != nil {
-					switch val.Format {
-					case "float64":
-						readReqBody = readReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
-
-					case "float32":
-						readReqBody = readReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat32())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
-
-					}
-				}
+				readReqBody = readReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 
 			case "boolean":
 				readReqBody = readReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
@@ -599,21 +590,10 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 					}
 
 				case "number":
-					if val.Format != nil {
-						switch val.Format {
-						case "float64":
-							readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
-							if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-								reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueFloat64()))
-							}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-
-						case "float32":
-							readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
-							if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-								reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueFloat32()))
-							}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-						}
-					}
+					readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
+					if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+						reqParams.%[1]s = strconv.FormatFloat(plan.%[1]s.ValueFloat64(), 'f', -1, 64)
+					}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 
 				case "boolean":
 					readOpOptionalParams = readOpOptionalParams + fmt.Sprintf(`
@@ -656,15 +636,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 
 			case "number":
-				if val.Format != nil {
-					switch val.Format {
-					case "float64":
-						createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
-
-					case "float32":
-						createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat32())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
-					}
-				}
+				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 
 			case "boolean":
 				createReqBody = createReqBody + fmt.Sprintf(`%[1]s: strconv.Formatbool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
@@ -691,15 +663,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 					}
 
 				case "number":
-					if val.Format != nil {
-						switch val.Format {
-						case "float64":
-							updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
-
-						case "float32":
-							updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat32())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
-						}
-					}
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 
 				case "boolean":
 					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
@@ -726,15 +690,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 					}
 
 				case "number":
-					if val.Format != nil {
-						switch val.Format {
-						case "float64":
-							updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-
-						case "float32":
-							updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat32())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-						}
-					}
+					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 
 				case "boolean":
 					updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
@@ -770,21 +726,10 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 
 			case "number":
-				if val.Format != nil {
-					switch val.Format {
-					case "float64":
-						updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
+				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
 						if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
 							reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueFloat64()))
 						}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-
-					case "float32":
-						updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
-						if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-							reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueFloat32()))
-						}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
-					}
-				}
 
 			case "boolean":
 				updateOpOptionalParams = updateOpOptionalParams + fmt.Sprintf(`
@@ -833,18 +778,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 
 			case "number":
-				if val.Format != nil {
-					switch val.Format {
-					case "float64":
-						deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
-
-					case "float32":
-						deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat32())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
-					}
-				}
-
-			case "number":
-				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.Itoa(int(plan.%[2]s.ValueFloat64())),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
+				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.FormatFloat(plan.%[2]s.ValueFloat64(), 'f', -1, 64),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
 
 			case "boolean":
 				deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: strconv.FormatBool(plan.%[2]s.ValueBool()),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
@@ -1116,17 +1050,7 @@ func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) stri
 				}
 				postPlan.%[3]s = types.Int64Value(int64(tempVal))
 			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
-		} else if val.Float32 != nil {
-			s.WriteString(fmt.Sprintf(`
-			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
-				tempVal, err := strconv.ParseFloat(response.%[2]s.Attributes()["%[1]s"].String(), 32)
-				if err != nil {
-					diagnostics.AddError("CONVERSION ERROR", fmt.Sprintf("Failed to convert %[1]s to float64: %v", err))
-					return
-				}
-				postPlan.%[3]s = types.Float32Value(tempVal)
-			}`, val.Name, util.ToPascalCase(resourceName), util.ToPascalCase(val.Name)) + "\n")
-		} else if val.Float64 != nil {
+		} else if val.Float64 != nil || val.Float32 != nil {
 			s.WriteString(fmt.Sprintf(`
 			if !response.%[2]s.Attributes()["%[1]s"].IsNull() || !response.%[2]s.Attributes()["%[1]s"].IsUnknown() {
 				tempVal, err := strconv.ParseFloat(response.%[2]s.Attributes()["%[1]s"].String(), 64)
