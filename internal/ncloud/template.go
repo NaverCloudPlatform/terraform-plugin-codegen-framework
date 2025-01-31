@@ -9,6 +9,7 @@ import (
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
 	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 )
 
 // To generate actual data, extract data from config.yml and code-spec.json, and render code for each receiver based on that data.
@@ -20,35 +21,40 @@ import (
 // RenderDelete(): Generates the Delete function.
 // Calculates the necessary data during initialization and performs rendering for each method.
 type Template struct {
-	spec                util.NcloudSpecification
-	providerName        string
-	resourceName        string
-	packageName         string
-	importStateLogic    string
-	refreshObjectName   string
-	model               string
-	refreshLogic        string
-	refreshWithResponse string
-	endpoint            string
-	deletePathParams    string
-	updatePathParams    string
-	readPathParams      string
-	createPathParams    string
-	deleteMethod        string
-	updateMethod        string
-	readMethod          string
-	createMethod        string
-	createReqBody       string
-	updateReqBody       string
-	readReqBody         string
-	deleteReqBody       string
-	createMethodName    string
-	readMethodName      string
-	updateMethodName    string
-	deleteMethodName    string
-	idGetter            string
-	funcMap             template.FuncMap
-	isUpdateExists      bool
+	spec                       util.NcloudSpecification
+	providerName               string
+	resourceName               string
+	packageName                string
+	importStateLogic           string
+	refreshObjectName          string
+	model                      string
+	refreshLogic               string
+	refreshWithResponse        string
+	endpoint                   string
+	deletePathParams           string
+	updatePathParams           string
+	readPathParams             string
+	createPathParams           string
+	deleteMethod               string
+	updateMethod               string
+	readMethod                 string
+	createMethod               string
+	createReqBody              string
+	updateReqBody              string
+	readReqBody                string
+	deleteReqBody              string
+	createMethodName           string
+	readMethodName             string
+	updateMethodName           string
+	deleteMethodName           string
+	idGetter                   string
+	funcMap                    template.FuncMap
+	createOpOptionalParam      string
+	updateOpOptionalParam      string
+	configParams               string
+	readReqBodyForCheckExist   string
+	readReqBodyForCheckDestroy string
+ 	isUpdateExists             bool
 }
 
 func (t *Template) RenderInitial() []byte {
@@ -108,23 +114,25 @@ func (t *Template) RenderCreate() []byte {
 	}
 
 	data := struct {
-		ResourceName      string
-		RefreshObjectName string
-		CreateReqBody     string
-		CreateMethod      string
-		CreateMethodName  string
-		Endpoint          string
-		CreatePathParams  string
-		IdGetter          string
+		ResourceName           string
+		RefreshObjectName      string
+		CreateReqBody          string
+		CreateReqOptionalParam string
+		CreateMethod           string
+		CreateMethodName       string
+		Endpoint               string
+		CreatePathParams       string
+		IdGetter               string
 	}{
-		ResourceName:      t.resourceName,
-		RefreshObjectName: t.refreshObjectName,
-		CreateReqBody:     t.createReqBody,
-		CreateMethod:      t.createMethod,
-		CreateMethodName:  t.createMethodName,
-		Endpoint:          t.endpoint,
-		CreatePathParams:  t.createPathParams,
-		IdGetter:          t.idGetter,
+		ResourceName:           t.resourceName,
+		RefreshObjectName:      t.refreshObjectName,
+		CreateReqBody:          t.createReqBody,
+		CreateReqOptionalParam: t.createOpOptionalParam,
+		CreateMethod:           t.createMethod,
+		CreateMethodName:       t.createMethodName,
+		Endpoint:               t.endpoint,
+		CreatePathParams:       t.createPathParams,
+		IdGetter:               t.idGetter,
 	}
 
 	err = createTemplate.ExecuteTemplate(&b, "Create", data)
@@ -168,25 +176,27 @@ func (t *Template) RenderUpdate() []byte {
 	}
 
 	data := struct {
-		IsUpdateExists    bool
-		ResourceName      string
-		RefreshObjectName string
-		UpdateReqBody     string
-		UpdateMethod      string
-		UpdateMethodName  string
-		Endpoint          string
-		UpdatePathParams  string
-		ReadPathParams    string
+		IsUpdateExists         bool
+ 		ResourceName           string
+		RefreshObjectName      string
+		UpdateReqBody          string
+		UpdateReqOptioanlParam string
+		UpdateMethod           string
+		UpdateMethodName       string
+		Endpoint               string
+		UpdatePathParams       string
+		ReadPathParams         string
 	}{
-		IsUpdateExists:    t.isUpdateExists,
-		ResourceName:      t.resourceName,
-		RefreshObjectName: t.refreshObjectName,
-		UpdateReqBody:     t.updateReqBody,
-		UpdateMethod:      t.updateMethod,
-		UpdateMethodName:  t.updateMethodName,
-		Endpoint:          t.endpoint,
-		UpdatePathParams:  t.updatePathParams,
-		ReadPathParams:    t.readPathParams,
+		IsUpdateExists:         t.isUpdateExists,
+		ResourceName:           t.resourceName,
+		RefreshObjectName:      t.refreshObjectName,
+		UpdateReqBody:          t.updateReqBody,
+		UpdateReqOptioanlParam: t.updateOpOptionalParam,
+		UpdateMethod:           t.updateMethod,
+		UpdateMethodName:       t.updateMethodName,
+		Endpoint:               t.endpoint,
+		UpdatePathParams:       t.updatePathParams,
+		ReadPathParams:         t.readPathParams,
 	}
 
 	err = updateTemplate.ExecuteTemplate(&b, "Update", data)
@@ -334,25 +344,31 @@ func (t *Template) RenderTest() []byte {
 	}
 
 	data := struct {
-		ProviderName      string
-		ResourceName      string
-		PackageName       string
-		RefreshObjectName string
-		ReadMethod        string
-		ReadMethodName    string
-		ReadReqBody       string
-		Endpoint          string
-		ReadPathParams    string
+		ProviderName               string
+		ResourceName               string
+		PackageName                string
+		RefreshObjectName          string
+		ReadMethod                 string
+		ReadMethodName             string
+		ReadReqBody                string
+		Endpoint                   string
+		ReadPathParams             string
+		ConfigParams               string
+		ReadReqBodyForCheckExist   string
+		ReadReqBodyForCheckDestroy string
 	}{
-		ProviderName:      t.providerName,
-		ResourceName:      t.resourceName,
-		PackageName:       t.packageName,
-		RefreshObjectName: t.refreshObjectName,
-		ReadMethod:        t.readMethod,
-		ReadMethodName:    t.readMethodName,
-		ReadReqBody:       t.readReqBody,
-		Endpoint:          t.endpoint,
-		ReadPathParams:    t.readPathParams,
+		ProviderName:               t.providerName,
+		ResourceName:               t.resourceName,
+		PackageName:                t.packageName,
+		RefreshObjectName:          t.refreshObjectName,
+		ReadMethod:                 t.readMethod,
+		ReadMethodName:             t.readMethodName,
+		ReadReqBody:                t.readReqBody,
+		Endpoint:                   t.endpoint,
+		ReadPathParams:             t.readPathParams,
+		ConfigParams:               t.configParams,
+		ReadReqBodyForCheckExist:   t.readReqBodyForCheckExist,
+		ReadReqBodyForCheckDestroy: t.readReqBodyForCheckDestroy,
 	}
 
 	err = testTemplate.ExecuteTemplate(&b, "Test", data)
@@ -363,6 +379,18 @@ func (t *Template) RenderTest() []byte {
 	return b.Bytes()
 }
 
+type RequestType struct {
+	Parameters  []string             `json:"parameters,omitempty"`
+	RequestBody *OptionalRequestBody `json:"request_body,omitempty"`
+	Response    string               `json:"response,omitempty"`
+}
+
+type OptionalRequestBody struct {
+	Name     string   `json:"name,omitempty"`
+	Required []string `json:"required,omitempty"`
+	Optional []string `json:"optional,omitempty"`
+}
+
 // Allocate prerequisite values
 func New(spec util.NcloudSpecification, resourceName, packageName string) *Template {
 	var refreshObjectName string
@@ -371,9 +399,13 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	var createReqBody string
 	var updateReqBody string
 	var readReqBody string
+	var readReqBodyForCheckExist string
+	var readReqBodyForCheckDestroy string
 	var deleteReqBody string
+	var createOpOptionalParam string
+	var updateOpOptionalParam string
 	var importStateOverride string
-	var targetResourceRequest util.RequestWithRefreshObjectName
+	var targetResourceRequest util.RequestInfo
 
 	t := &Template{
 		spec:         spec,
@@ -408,6 +440,8 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 
 	for _, val := range targetResourceRequest.Read.Parameters {
 		readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+		readReqBodyForCheckExist = readReqBodyForCheckExist + fmt.Sprintf(`		%[1]s: resource.Primary.Attributes["%[2]s"],`, util.PathToPascal(val), util.FirstAlphabetToLowerCase(util.PathToPascal(val))) + "\n"
+		readReqBodyForCheckDestroy = readReqBodyForCheckDestroy + fmt.Sprintf(`		%[1]s: rs.Primary.Attributes["%[2]s"],`, util.PathToPascal(val), util.FirstAlphabetToLowerCase(util.PathToPascal(val))) + "\n"
 	}
 
 	for _, val := range targetResourceRequest.Create.Parameters {
@@ -431,6 +465,72 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 		t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
 		t.updateMethod = targetResourceRequest.Update[0].Method
 		t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
+  }
+  
+	for _, val := range targetResourceRequest.Create.RequestBody.Optional {
+
+    switch val.Type {
+		case "string":
+			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "integer":
+			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "boolean":
+			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "array":
+			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+    // Array and Object are treated as string with serialization
+		default:
+			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		}
+	}
+
+	for _, val := range targetResourceRequest.Update[0].RequestBody.Optional {
+
+    switch val.Type {
+		case "string":
+			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "integer":
+			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = strconv.Itoa(int(plan.%[1]s.ValueInt64()))
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "boolean":
+			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = strconv.FormatBool(plan.%[1]s.ValueBool())
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		case "array":
+			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+
+		// Array and Object are treated as string with serialization
+		default:
+			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
+			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+				reqParams.%[1]s = plan.%[1]s.ValueString()
+			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
+		}
 	}
 
 	t.funcMap = funcMap
@@ -445,6 +545,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	t.deletePathParams = extractPathParams(targetResourceRequest.Delete.Path)
 	t.readPathParams = extractReadPathParams(targetResourceRequest.Read.Path)
 	t.createPathParams = extractPathParams(targetResourceRequest.Create.Path)
+	t.configParams = MakeTestTFConfig(targetResourceRequest.Create.RequestBody.Required, targetResourceRequest.Create.Parameters)
 	t.deleteMethod = targetResourceRequest.Delete.Method
 	t.readMethod = targetResourceRequest.Read.Method
 	t.createMethod = targetResourceRequest.Create.Method
@@ -452,6 +553,10 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	t.updateReqBody = updateReqBody
 	t.readReqBody = readReqBody
 	t.deleteReqBody = deleteReqBody
+	t.readReqBodyForCheckExist = readReqBodyForCheckExist
+	t.readReqBodyForCheckDestroy = readReqBodyForCheckDestroy
+	t.createOpOptionalParam = createOpOptionalParam
+	t.updateOpOptionalParam = updateOpOptionalParam
 	t.createMethodName = strings.ToUpper(targetResourceRequest.Create.Method) + getMethodName(targetResourceRequest.Create.Path)
 	t.readMethodName = strings.ToUpper(targetResourceRequest.Read.Method) + getMethodName(targetResourceRequest.Read.Path)
 	t.deleteMethodName = strings.ToUpper(targetResourceRequest.Delete.Method) + getMethodName(targetResourceRequest.Delete.Path)
@@ -546,7 +651,7 @@ func makeIdGetter(target string) string {
 
 	for idx, val := range parts {
 		if idx == len(parts)-1 {
-			s = s + fmt.Sprintf(`["%s"].(string)`, util.ToCamelCase(val))
+			s = s + fmt.Sprintf(`["%s"].(string)`, util.ToPascalCase(util.ToCamelCase(val)))
 			continue
 		}
 
@@ -634,4 +739,18 @@ func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) stri
 	}
 
 	return s.String()
+}
+
+func MakeTestTFConfig(requiredCreateParams, createPathParams []string) string {
+	var t strings.Builder
+
+	for _, val := range requiredCreateParams {
+		t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val), "tf-"+acctest.RandString(5)) + "\n")
+	}
+
+	for _, val := range createPathParams {
+		t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, util.FirstAlphabetToLowerCase(util.PathToPascal(val)), "tf-"+acctest.RandString(5)) + "\n")
+	}
+
+	return t.String()
 }

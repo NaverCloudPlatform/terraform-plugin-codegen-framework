@@ -3,15 +3,16 @@
  * Update Template
  * Required data are as follows
  *
-		IsUpdateExists    bool
-		ResourceName      string
-		RefreshObjectName string
-		UpdateReqBody     string
-		UpdateMethod      string
-		UpdateMethodName  string
-		Endpoint          string
-		UpdatePathParams  string
-		ReadPathParams    string
+		IsUpdateExists         bool
+ 		ResourceName           string
+		RefreshObjectName      string
+		UpdateReqBody          string
+		UpdateReqOptioanlParam string
+		UpdateMethod           string
+		UpdateMethodName       string
+		Endpoint               string
+		UpdatePathParams       string
+		ReadPathParams         string
  * ================================================================================= */
 
 func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -27,6 +28,8 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, re
  	reqParams := &ncloudsdk.{{.UpdateMethodName}}Request{
 		{{.UpdateReqBody}}
 	}
+
+	{{.UpdateReqOptioanlParam}}
 
 	tflog.Info(ctx, "Update{{.UpdateMethodName}} reqParams="+common.MarshalUncheckedString(reqParams))
 
