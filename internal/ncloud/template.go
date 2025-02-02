@@ -54,6 +54,7 @@ type Template struct {
 	configParams               string
 	readReqBodyForCheckExist   string
 	readReqBodyForCheckDestroy string
+ 	isUpdateExists             bool
 }
 
 func (t *Template) RenderInitial() []byte {
@@ -175,7 +176,8 @@ func (t *Template) RenderUpdate() []byte {
 	}
 
 	data := struct {
-		ResourceName           string
+		IsUpdateExists         bool
+ 		ResourceName           string
 		RefreshObjectName      string
 		UpdateReqBody          string
 		UpdateReqOptioanlParam string
@@ -185,6 +187,7 @@ func (t *Template) RenderUpdate() []byte {
 		UpdatePathParams       string
 		ReadPathParams         string
 	}{
+		IsUpdateExists:         t.isUpdateExists,
 		ResourceName:           t.resourceName,
 		RefreshObjectName:      t.refreshObjectName,
 		UpdateReqBody:          t.updateReqBody,
@@ -435,10 +438,6 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val), util.FirstAlphabetToUpperCase(val)) + "\n"
 	}
 
-	for _, val := range targetResourceRequest.Update[0].RequestBody.Required {
-		updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val), util.FirstAlphabetToUpperCase(val)) + "\n"
-	}
-
 	for _, val := range targetResourceRequest.Read.Parameters {
 		readReqBody = readReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
 		readReqBodyForCheckExist = readReqBodyForCheckExist + fmt.Sprintf(`		%[1]s: resource.Primary.Attributes["%[2]s"],`, util.PathToPascal(val), util.FirstAlphabetToLowerCase(util.PathToPascal(val))) + "\n"
@@ -449,17 +448,28 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 		createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
 	}
 
-	for _, val := range targetResourceRequest.Update[0].Parameters {
-		updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
-	}
-
 	for _, val := range targetResourceRequest.Delete.Parameters {
 		deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
 	}
 
+	if len(targetResourceRequest.Update) > 0 {
+		for _, val := range targetResourceRequest.Update[0].RequestBody.Required {
+			updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val), util.FirstAlphabetToUpperCase(val)) + "\n"
+		}
+
+		for _, val := range targetResourceRequest.Update[0].Parameters {
+			updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val), util.PathToPascal(val)) + "\n"
+		}
+
+		t.isUpdateExists = true
+		t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
+		t.updateMethod = targetResourceRequest.Update[0].Method
+		t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
+  }
+  
 	for _, val := range targetResourceRequest.Create.RequestBody.Optional {
 
-		switch val.Type {
+    switch val.Type {
 		case "string":
 			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
@@ -481,7 +491,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 				reqParams.%[1]s = plan.%[1]s.ValueString()
 			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"
 
-		// Array and Object are treated as string with serialization
+    // Array and Object are treated as string with serialization
 		default:
 			createOpOptionalParam = createOpOptionalParam + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
@@ -492,7 +502,7 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 
 	for _, val := range targetResourceRequest.Update[0].RequestBody.Optional {
 
-		switch val.Type {
+    switch val.Type {
 		case "string":
 			updateOpOptionalParam = updateOpOptionalParam + fmt.Sprintf(`
 			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
@@ -533,12 +543,10 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	t.refreshWithResponse = MakeRefreshFromResponse(attributes, resourceName)
 	t.endpoint = spec.Provider.Endpoint
 	t.deletePathParams = extractPathParams(targetResourceRequest.Delete.Path)
-	t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
 	t.readPathParams = extractReadPathParams(targetResourceRequest.Read.Path)
 	t.createPathParams = extractPathParams(targetResourceRequest.Create.Path)
 	t.configParams = MakeTestTFConfig(targetResourceRequest.Create.RequestBody.Required, targetResourceRequest.Create.Parameters)
 	t.deleteMethod = targetResourceRequest.Delete.Method
-	t.updateMethod = targetResourceRequest.Update[0].Method
 	t.readMethod = targetResourceRequest.Read.Method
 	t.createMethod = targetResourceRequest.Create.Method
 	t.createReqBody = createReqBody
@@ -551,7 +559,6 @@ func New(spec util.NcloudSpecification, resourceName, packageName string) *Templ
 	t.updateOpOptionalParam = updateOpOptionalParam
 	t.createMethodName = strings.ToUpper(targetResourceRequest.Create.Method) + getMethodName(targetResourceRequest.Create.Path)
 	t.readMethodName = strings.ToUpper(targetResourceRequest.Read.Method) + getMethodName(targetResourceRequest.Read.Path)
-	t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
 	t.deleteMethodName = strings.ToUpper(targetResourceRequest.Delete.Method) + getMethodName(targetResourceRequest.Delete.Path)
 	t.idGetter = makeIdGetter(id)
 
