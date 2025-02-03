@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/spec"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/spec"
 )
 
 func WriteNcloudResources(resourcesSchema map[string][]byte, spec util.NcloudSpecification, outputDir, packageName string, genRefresh bool) error {
@@ -26,7 +26,7 @@ func WriteNcloudResources(resourcesSchema map[string][]byte, spec util.NcloudSpe
 
 		filename := fmt.Sprintf("%s.go", k)
 
-		n := New(spec, k, packageName)
+		n := NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -100,7 +100,7 @@ func WriteNcloudDataSources(dataSourcesSchema map[string][]byte, spec util.Nclou
 
 		filename := fmt.Sprintf("%s_data_source_gen.go", k)
 
-		n := New(spec, k, packageName)
+		n := NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -165,7 +165,7 @@ func WriteNcloudDataSourceTests(dataSourcesSchema map[string][]byte, spec util.N
 
 		filename := fmt.Sprintf("%s_data_source_test.go", k)
 
-		n := New(spec, k, packageName)
+		n := NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -204,7 +204,7 @@ func WriteNcloudResourceTests(resourcesSchema map[string][]byte, spec util.Nclou
 
 		filename := fmt.Sprintf("%s_test.go", k)
 
-		n := New(spec, k, packageName)
+		n := NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -239,7 +239,7 @@ func WriteNcloudResourceRefresh(resourcesSchema map[string][]byte, spec util.Ncl
 
 		filename := fmt.Sprintf("%s_refresh.go", k)
 
-		n := New(spec, k, packageName)
+		n := NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
