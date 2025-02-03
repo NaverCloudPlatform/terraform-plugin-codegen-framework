@@ -6,6 +6,8 @@
 		ResourceName           string
 		RefreshObjectName      string
 		CreateReqBody          string
+		CreateReqListParam     string
+		CreateReqObjectParam   string
 		CreateReqOptionalParam string
 		CreateMethod           string
 		CreateMethodName       string
@@ -27,6 +29,10 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 	reqParams := &ncloudsdk.{{.CreateMethodName}}Request{
 		{{.CreateReqBody}}
 	}
+
+	{{.CreateReqListParam}}
+
+	{{.CreateReqObjectParam}}
 
 	{{.CreateReqOptionalParam}}
 
