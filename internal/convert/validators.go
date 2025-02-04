@@ -7,8 +7,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-codegen-spec/code"
-	specschema "github.com/hashicorp/terraform-plugin-codegen-spec/schema"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/code"
+	specschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/schema"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/schema"
 )
@@ -17,6 +17,7 @@ const (
 	ValidatorTypeBool    ValidatorType = "Bool"
 	ValidatorTypeFloat64 ValidatorType = "Float64"
 	ValidatorTypeInt64   ValidatorType = "Int64"
+	ValidatorTypeInt32   ValidatorType = "Int32"
 	ValidatorTypeList    ValidatorType = "List"
 	ValidatorTypeMap     ValidatorType = "Map"
 	ValidatorTypeNumber  ValidatorType = "Number"

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	specschema "github.com/hashicorp/terraform-plugin-codegen-spec/schema"
+	specschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/schema"
 )
 
 // GetElementType generates the strings for use within templates for specifying the types to use with

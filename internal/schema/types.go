@@ -4,7 +4,7 @@
 package schema
 
 import (
-	specschema "github.com/hashicorp/terraform-plugin-codegen-spec/schema"
+	specschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/schema"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/model"
 )
@@ -97,6 +97,7 @@ const (
 	GeneratorBoolAttribute
 	GeneratorFloat64Attribute
 	GeneratorInt64Attribute
+	GeneratorInt32Attribute
 	GeneratorListAttribute
 	GeneratorListNestedAttribute
 	GeneratorListNestedBlock

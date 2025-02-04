@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/schema"
 	"github.com/google/go-cmp/cmp"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/schema"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/convert"
 	generatorschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/schema"

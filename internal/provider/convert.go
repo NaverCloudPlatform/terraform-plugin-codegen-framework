@@ -6,8 +6,8 @@ package provider
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-codegen-spec/provider"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/spec"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/provider"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/spec"
 
 	generatorschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/schema"
 )
@@ -93,6 +93,8 @@ func NewAttribute(a provider.Attribute) (generatorschema.GeneratorAttribute, err
 		return NewGeneratorFloat64Attribute(a.Name, a.Float64)
 	case a.Int64 != nil:
 		return NewGeneratorInt64Attribute(a.Name, a.Int64)
+	case a.Int32 != nil:
+		return NewGeneratorInt32Attribute(a.Name, a.Int32)
 	case a.List != nil:
 		return NewGeneratorListAttribute(a.Name, a.List)
 	case a.ListNested != nil:
