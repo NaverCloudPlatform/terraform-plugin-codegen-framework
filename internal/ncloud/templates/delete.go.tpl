@@ -21,7 +21,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Delete(ctx context.Context, re
 		return
 	}
 
- 	reqParams := &ncloudsdk.{{.DeleteMethodName}}Request{
+ 	reqParams := &ncloudsdk.Primitive{{.DeleteMethodName}}Request{
 		{{.DeleteReqBody}}
 	}
 
@@ -29,7 +29,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Delete(ctx context.Context, re
 
 	c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
 
-	_, err := c.{{.DeleteMethodName}}_TF(reqParams)
+	_, err := c.{{.DeleteMethodName}}_TF(ctx, reqParams)
 	if err != nil {
 		resp.Diagnostics.AddError("DELETING ERROR", err.Error())
 		return

@@ -33,7 +33,7 @@ func WriteDataSources(dataSourcesSchema map[string][]byte, spec util.NcloudSpeci
 
 		filename := fmt.Sprintf("%s_data_source_gen.go", k)
 
-		n := ncloud.New(spec, k, packageName)
+		n := ncloud.NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -74,6 +74,7 @@ func WriteDataSources(dataSourcesSchema map[string][]byte, spec util.NcloudSpeci
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
+		util.RemoveCustomType(filePath)
 	}
 
 	return nil
@@ -99,7 +100,7 @@ func WriteResources(resourcesSchema map[string][]byte, spec util.NcloudSpecifica
 
 		filename := fmt.Sprintf("%s_resource_gen.go", k)
 
-		n := ncloud.New(spec, k, packageName)
+		n := ncloud.NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -160,6 +161,7 @@ func WriteResources(resourcesSchema map[string][]byte, spec util.NcloudSpecifica
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
+		util.RemoveCustomType(filePath)
 	}
 
 	return nil
@@ -185,7 +187,7 @@ func WriteResourceTests(resourcesSchema map[string][]byte, spec util.NcloudSpeci
 
 		filename := fmt.Sprintf("%s_resource_gen_test.go", k)
 
-		n := ncloud.New(spec, k, packageName)
+		n := ncloud.NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -201,6 +203,7 @@ func WriteResourceTests(resourcesSchema map[string][]byte, spec util.NcloudSpeci
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
+		util.RemoveCustomType(filePath)
 	}
 
 	return nil
@@ -225,7 +228,7 @@ func WriteDataSourceTests(dataSourcesSchema map[string][]byte, spec util.NcloudS
 
 		filename := fmt.Sprintf("%s_data_source_gen_test.go", k)
 
-		n := ncloud.New(spec, k, packageName)
+		n := ncloud.NewResource(spec, k, packageName)
 
 		f, err := os.Create(filepath.Join(outputDir, dirName, filename))
 		if err != nil {
@@ -241,6 +244,7 @@ func WriteDataSourceTests(dataSourcesSchema map[string][]byte, spec util.NcloudS
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
+		util.RemoveCustomType(filePath)
 	}
 
 	return nil
@@ -293,6 +297,7 @@ func WriteProviders(providersSchema, providerModels, customTypeValue, providerTo
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
+		util.RemoveCustomType(filePath)
 	}
 
 	return nil
@@ -317,6 +322,7 @@ func WriteBytes(outputFilePath string, outputBytes []byte, forceOverwrite bool) 
 	filePath := f.Name()
 
 	util.RemoveDuplicates(filePath)
+	util.RemoveCustomType(filePath)
 
 	return nil
 }

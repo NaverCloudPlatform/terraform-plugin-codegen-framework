@@ -7,7 +7,9 @@
  		ResourceName           string
 		RefreshObjectName      string
 		UpdateReqBody          string
-		UpdateReqOptioanlParam string
+		UpdateReqListParam     string
+		UpdateReqObjectParam   string
+		UpdateReqOptionalParam string
 		UpdateMethod           string
 		UpdateMethodName       string
 		Endpoint               string
@@ -25,17 +27,21 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, re
 		return
 	}
 
- 	reqParams := &ncloudsdk.{{.UpdateMethodName}}Request{
+ 	reqParams := &ncloudsdk.Primitive{{.UpdateMethodName}}Request{
 		{{.UpdateReqBody}}
 	}
 
-	{{.UpdateReqOptioanlParam}}
+	{{.UpdateReqListParam}}
+
+	{{.UpdateReqObjectParam}}
+
+	{{.UpdateReqOptionalParam}}
 
 	tflog.Info(ctx, "Update{{.UpdateMethodName}} reqParams="+common.MarshalUncheckedString(reqParams))
 
 	c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
 
-	response, err := c.{{.UpdateMethodName}}_TF(reqParams)
+	response, err := c.{{.UpdateMethodName}}_TF(ctx, reqParams)
 	if err != nil {
 		resp.Diagnostics.AddError("UPDATING ERROR", err.Error())
 		return
@@ -47,7 +53,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Update(ctx context.Context, re
 
 	tflog.Info(ctx, "Update{{.UpdateMethodName}} response="+common.MarshalUncheckedString(response))
 
-	plan.refreshFromOutput(&resp.Diagnostics, plan.ID.ValueString())
+	plan.refreshFromOutput(ctx, &resp.Diagnostics, plan.ID.ValueString())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 

@@ -10,9 +10,9 @@ import (
 )
 
 func RemovingWhiteSpace(input string) string {
-	input = strings.ReplaceAll(input, "\t", "") // 탭 제거
-	input = strings.ReplaceAll(input, "\n", "") // 개행 제거
-	input = strings.ReplaceAll(input, " ", "")  // 공백 제거
+	input = strings.ReplaceAll(input, "\t", "") // remove tab
+	input = strings.ReplaceAll(input, "\n", "") // remove newline
+	input = strings.ReplaceAll(input, " ", "")  // remove space
 	return input
 }
 
