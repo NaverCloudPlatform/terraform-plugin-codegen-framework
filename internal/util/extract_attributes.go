@@ -27,17 +27,28 @@ type IndividualOperationInfo struct {
 	Path        string               `json:"path,omitempty"`
 }
 
-type CrudParameters struct {
-	Create IndividualOperationInfo    `json:"create,omitempty"`
-	Read   IndividualOperationInfo    `json:"read"`
+type CRUDParameters struct {
+	Create *IndividualOperationInfo   `json:"create,omitempty"`
+	Read   *IndividualOperationInfo   `json:"read"`
 	Update []*IndividualOperationInfo `json:"update"`
-	Delete IndividualOperationInfo    `json:"delete"`
+	Delete *IndividualOperationInfo   `json:"delete"`
 }
 
-type RequestInfo struct {
-	CrudParameters
-	Name string `json:"name"`
-	Id   string `json:"id"`
+type RequestParameters struct {
+	Required []*RequestParametersInfo `json:"required,omitempty"`
+	Optional []*RequestParametersInfo `json:"optional,omitempty"`
+}
+
+type DetailedRequestType struct {
+	spec.RequestType
+	Parameters  *RequestParameters `json:"parameters,omitempty"`
+	RequestBody *NcloudRequestBody `json:"request_body,omitempty"`
+}
+
+type NcloudRequestBody struct {
+	spec.RequestBody
+	Required []*RequestParametersInfo `json:"required,omitempty"`
+	Optional []*RequestParametersInfo `json:"optional,omitempty"`
 }
 
 type NcloudProvider struct {
@@ -47,24 +58,25 @@ type NcloudProvider struct {
 
 type NcloudSpecification struct {
 	spec.Specification
-	Provider    *NcloudProvider `json:"provider"`
-	Requests    []RequestInfo   `json:"requests"`
-	Resources   []Resource      `json:"resources"`
-	DataSources []DataSource    `json:"datasources"`
+	Provider    *NcloudProvider    `json:"provider"`
+	Resources   []NcloudResource   `json:"resources"`
+	DataSources []NcloudDataSource `json:"datasources"`
 }
 
-type Resource struct {
+type NcloudResource struct {
 	resource.Resource
-	RefreshObjectName   string `json:"refresh_object_name"`
-	ImportStateOverride string `json:"import_state_override"`
-	Id                  string `json:"id"`
+	CRUDParameters      CRUDParameters `json:"crud_parameters"`
+	RefreshObjectName   string         `json:"refresh_object_name"`
+	ImportStateOverride string         `json:"import_state_override"`
+	Id                  string         `json:"id"`
 }
 
-type DataSource struct {
+type NcloudDataSource struct {
 	datasource.DataSource
-	RefreshObjectName   string `json:"refresh_object_name"`
-	ImportStateOverride string `json:"import_state_override"`
-	Id                  string `json:"id"`
+	CRUDParameters      CRUDParameters `json:"crud_parameters"`
+	RefreshObjectName   string         `json:"refresh_object_name"`
+	ImportStateOverride string         `json:"import_state_override"`
+	Id                  string         `json:"id"`
 }
 
 type Schema struct {
