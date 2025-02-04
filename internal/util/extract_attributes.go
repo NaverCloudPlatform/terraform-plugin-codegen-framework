@@ -1,10 +1,10 @@
 package util
 
 import (
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/datasource"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/provider"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/spec"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/datasource"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/provider"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
 )
 
 type OptionalRequestBody struct {
@@ -26,10 +26,10 @@ type NcloudCommonRequestType struct {
 }
 
 type CrudParameters struct {
-	Create NcloudCommonRequestType    `json:"create,omitempty"`
-	Read   NcloudCommonRequestType    `json:"read"`
+	Create *NcloudCommonRequestType   `json:"create,omitempty"`
+	Read   *NcloudCommonRequestType   `json:"read"`
 	Update []*NcloudCommonRequestType `json:"update"`
-	Delete NcloudCommonRequestType    `json:"delete"`
+	Delete *NcloudCommonRequestType   `json:"delete"`
 }
 
 type RequestInfo struct {
