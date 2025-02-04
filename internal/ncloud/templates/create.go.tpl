@@ -26,7 +26,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 
 	c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
 
-	reqParams := &ncloudsdk.{{.CreateMethodName}}Request{
+	reqParams := &ncloudsdk.Primitive{{.CreateMethodName}}Request{
 		{{.CreateReqBody}}
 	}
 
@@ -38,7 +38,7 @@ func (a *{{.ResourceName | ToCamelCase}}Resource) Create(ctx context.Context, re
 
 	tflog.Info(ctx, "Create{{.ResourceName | ToPascalCase}} reqParams="+common.MarshalUncheckedString(reqParams))
 
-	response, err := c.{{.CreateMethodName}}(reqParams)
+	response, err := c.{{.CreateMethodName}}(ctx, reqParams)
 	if err != nil {
 		resp.Diagnostics.AddError("Error with {{.CreateMethodName}}_TF", err.Error())
 		return

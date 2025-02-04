@@ -17,7 +17,7 @@ func (plan *{{.RefreshObjectName | ToPascalCase}}Model) waitResourceCreated(ctx 
 		Target:  []string{"CREATED"},
 		Refresh: func() (interface{}, string, error) {
 			c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
-			response, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
+			response, err := c.{{.ReadMethodName}}_TF(ctx, &ncloudsdk.Primitive{{.ReadMethodName}}Request{
 					// need to use id
 					{{.ReadReqBody}}
 			})
@@ -47,7 +47,7 @@ func (plan *{{.RefreshObjectName | ToPascalCase}}Model) waitResourceDeleted(ctx 
 		Target:  []string{"DELETED"},
 		Refresh: func() (interface{}, string, error) {
 			c := ncloudsdk.NewClient("{{.Endpoint}}", os.Getenv("NCLOUD_ACCESS_KEY"), os.Getenv("NCLOUD_SECRET_KEY"))
-			response, err := c.{{.ReadMethodName}}_TF(&ncloudsdk.{{.ReadMethodName}}Request{
+			response, err := c.{{.ReadMethodName}}_TF(ctx, &ncloudsdk.Primitive{{.ReadMethodName}}Request{
 					// need to use id
 					{{.ReadReqBody}}
 			})
