@@ -29,6 +29,12 @@ func Gen_ConvertOAStoTFTypes(data resource.Attributes) (string, string, error) {
 				dto.%[1]s = types.BoolValue(data["%[2]s"].(bool))
 			}`, util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 			m = m + fmt.Sprintf("%[1]s         types.Bool `tfsdk:\"%[2]s\"`", util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
+		} else if val.Int32 != nil {
+			s = s + fmt.Sprintf(`
+			if data["%[2]s"] != nil {
+				dto.%[1]s = types.Int32Value(data["%[2]s"].(int32))
+			}`, util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
+			m = m + fmt.Sprintf("%[1]s         types.Int32 `tfsdk:\"%[2]s\"`", util.ToPascalCase(n), PascalToSnakeCase(n)) + "\n"
 		} else if val.Int64 != nil {
 			s = s + fmt.Sprintf(`
 			if data["%[2]s"] != nil {
