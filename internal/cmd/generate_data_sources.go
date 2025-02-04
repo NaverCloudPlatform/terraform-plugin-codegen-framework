@@ -13,12 +13,8 @@ import (
 
 	"github.com/hashicorp/cli"
 
-	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/format"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/input"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/ncloud"
-	ncloud_datasource "github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/ncloud/datasource"
-	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/output"
-	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/schema"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/validate"
 )
@@ -135,36 +131,36 @@ func generateDataSourceCode(ctx context.Context, spec util.NcloudSpecification, 
 	// ctxWithPath := logging.SetPathInContext(ctx, "data_source")
 
 	// convert IR to framework schemas
-	s, err := ncloud_datasource.NewSchemas(spec)
-	if err != nil {
-		return fmt.Errorf("error converting IR to Plugin Framework schema: %w", err)
-	}
+	// s, err := ncloud_datasource.NewSchemas(spec)
+	// if err != nil {
+	// 	return fmt.Errorf("error converting IR to Plugin Framework schema: %w", err)
+	// }
 
 	// convert framework schema to []byte
-	g := schema.NewGeneratorSchemas(s)
-	schemas, err := g.Schemas(packageName, generatorType)
-	if err != nil {
-		return fmt.Errorf("error converting Plugin Framework schema to Go code: %w", err)
-	}
+	// g := schema.NewGeneratorSchemas(s)
+	// schemas, err := g.Schemas(packageName, generatorType)
+	// if err != nil {
+	// 	return fmt.Errorf("error converting Plugin Framework schema to Go code: %w", err)
+	// }
 
 	// format schema code
-	formattedSchemas, err := format.Format(schemas)
-	if err != nil {
-		return fmt.Errorf("error formatting Go code: %w", err)
-	}
+	// formattedSchemas, err := format.Format(schemas)
+	// if err != nil {
+	// 	return fmt.Errorf("error formatting Go code: %w", err)
+	// }
 
 	// --- NCLOUD Logic ---
 
 	// write code
-	err = ncloud.WriteNcloudDataSources(formattedSchemas, spec, outputPath, packageName)
-	if err != nil {
-		return fmt.Errorf("error writing Go code to output: %w", err)
-	}
+	// err = ncloud.WriteNcloudDataSources(formattedSchemas, spec, outputPath, packageName)
+	// if err != nil {
+	// 	return fmt.Errorf("error writing Go code to output: %w", err)
+	// }
 
-	err = output.WriteDataSourceTests(formattedSchemas, spec, outputPath, packageName)
-	if err != nil {
-		return fmt.Errorf("error writing Go code to output: %w", err)
-	}
+	// err = output.WriteDataSourceTests(formattedSchemas, spec, outputPath, packageName)
+	// if err != nil {
+	// 	return fmt.Errorf("error writing Go code to output: %w", err)
+	// }
 
 	return nil
 }
