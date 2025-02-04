@@ -7,8 +7,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
-	specschema "github.com/hashicorp/terraform-plugin-codegen-spec/schema"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
+	specschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/schema"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/convert"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/model"

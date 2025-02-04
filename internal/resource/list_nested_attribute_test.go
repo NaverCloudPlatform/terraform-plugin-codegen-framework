@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/code"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/resource"
+	specschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/schema"
 	"github.com/google/go-cmp/cmp"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/code"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/resource"
-	specschema "github.com/hashicorp/terraform-plugin-codegen-spec/schema"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/convert"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/model"

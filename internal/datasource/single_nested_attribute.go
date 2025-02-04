@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-codegen-spec/datasource"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/datasource"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/convert"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/model"

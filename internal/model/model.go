@@ -12,6 +12,7 @@ const (
 	BoolValueType    = "types.Bool"
 	Float64ValueType = "types.Float64"
 	Int64ValueType   = "types.Int64"
+	Int32ValueType   = "types.Int32"
 	ListValueType    = "types.List"
 	MapValueType     = "types.Map"
 	NumberValueType  = "types.Number"

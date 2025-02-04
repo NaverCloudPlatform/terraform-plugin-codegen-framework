@@ -4,7 +4,7 @@
 package datasource
 
 import (
-	specschema "github.com/hashicorp/terraform-plugin-codegen-spec/schema"
+	specschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/schema"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/schema"
 )

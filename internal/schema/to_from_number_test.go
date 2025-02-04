@@ -6,9 +6,9 @@ package schema
 import (
 	"testing"
 
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/code"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/schema"
 	"github.com/google/go-cmp/cmp"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/code"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/schema"
 )
 
 func TestToFromNumber_renderFrom(t *testing.T) {

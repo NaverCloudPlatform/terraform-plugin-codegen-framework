@@ -6,7 +6,7 @@ package convert
 import (
 	"fmt"
 
-	specschema "github.com/hashicorp/terraform-plugin-codegen-spec/schema"
+	specschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/schema"
 
 	generatorschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/schema"
 )

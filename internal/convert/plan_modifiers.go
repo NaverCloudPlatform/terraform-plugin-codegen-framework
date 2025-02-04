@@ -7,8 +7,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-codegen-spec/code"
-	specschema "github.com/hashicorp/terraform-plugin-codegen-spec/schema"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/code"
+	specschema "github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/schema"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/schema"
 )
@@ -17,6 +17,7 @@ const (
 	PlanModifierTypeBool    PlanModifierType = "Bool"
 	PlanModifierTypeFloat64 PlanModifierType = "Float64"
 	PlanModifierTypeInt64   PlanModifierType = "Int64"
+	PlanModifierTypeInt32   PlanModifierType = "Int32"
 	PlanModifierTypeList    PlanModifierType = "List"
 	PlanModifierTypeMap     PlanModifierType = "Map"
 	PlanModifierTypeNumber  PlanModifierType = "Number"

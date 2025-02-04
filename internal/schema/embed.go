@@ -97,6 +97,51 @@ var Float64ValueValueTemplate string
 //go:embed templates/float64_value_valuable.gotmpl
 var Float64ValueValuableTemplate string
 
+// Int32 From/To
+
+//go:embed templates/int32_from.gotmpl
+var Int32FromTemplate string
+
+//go:embed templates/int32_to.gotmpl
+var Int32ToTemplate string
+
+// Int32 Type
+
+//go:embed templates/int32_type_equal.gotmpl
+var Int32TypeEqualTemplate string
+
+//go:embed templates/int32_type_string.gotmpl
+var Int32TypeStringTemplate string
+
+//go:embed templates/int32_type_type.gotmpl
+var Int32TypeTypeTemplate string
+
+//go:embed templates/int32_type_typable.gotmpl
+var Int32TypeTypableTemplate string
+
+//go:embed templates/int32_type_value_from_int32.gotmpl
+var Int32TypeValueFromInt32Template string
+
+//go:embed templates/int32_type_value_from_terraform.gotmpl
+var Int32TypeValueFromTerraformTemplate string
+
+//go:embed templates/int32_type_value_type.gotmpl
+var Int32TypeValueTypeTemplate string
+
+// Int32 Value
+
+//go:embed templates/int32_value_equal.gotmpl
+var Int32ValueEqualTemplate string
+
+//go:embed templates/int32_value_type.gotmpl
+var Int32ValueTypeTemplate string
+
+//go:embed templates/int32_value_value.gotmpl
+var Int32ValueValueTemplate string
+
+//go:embed templates/int32_value_valuable.gotmpl
+var Int32ValueValuableTemplate string
+
 // Int64 From/To
 
 //go:embed templates/int64_from.gotmpl
