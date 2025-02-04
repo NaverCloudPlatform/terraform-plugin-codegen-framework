@@ -1,6 +1,7 @@
 package util
 
 import (
+	"bufio"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -98,4 +99,40 @@ func RemoveDuplicates(filePath string) error {
 	}
 
 	return nil
+}
+
+func RemoveCustomType(filePath string) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	var result []string
+	scanner := bufio.NewScanner(file)
+	// 전체 파일 라인을 읽음
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	if err = scanner.Err(); err != nil {
+		return err
+	}
+
+	i := 0
+	for i < len(lines) {
+		// 현재 줄이 "CustomType"을 포함하는 경우,
+		// 해당 줄과 그 이후 4줄(총 5줄)을 건너뛰기
+		if strings.Contains(lines[i], "CustomType") {
+			// 삭제할 5줄 블럭 범위
+			i += 5
+			continue
+		}
+		result = append(result, lines[i])
+		i++
+	}
+
+	output := strings.Join(result, "\n")
+	// io.WriteFile 대신 os.WriteFile을 사용하여 올바르게 파일을 씁니다.
+	return os.WriteFile(filePath, []byte(output), 0644)
 }

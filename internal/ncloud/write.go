@@ -76,6 +76,7 @@ func WriteNcloudResources(resourcesSchema map[string][]byte, spec util.NcloudSpe
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
+		util.RemoveCustomType(filePath)
 	}
 
 	return nil
@@ -141,6 +142,7 @@ func WriteNcloudDataSources(dataSourcesSchema map[string][]byte, spec util.Nclou
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
+		util.RemoveCustomType(filePath)
 	}
 
 	return nil
@@ -180,6 +182,7 @@ func WriteNcloudDataSourceTests(dataSourcesSchema map[string][]byte, spec util.N
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
+		util.RemoveCustomType(filePath)
 	}
 
 	return nil
@@ -219,6 +222,7 @@ func WriteNcloudResourceTests(resourcesSchema map[string][]byte, spec util.Nclou
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
+		util.RemoveCustomType(filePath)
 	}
 
 	return nil
@@ -259,6 +263,7 @@ func WriteNcloudResourceRefresh(resourcesSchema map[string][]byte, spec util.Ncl
 		filePath := f.Name()
 
 		util.RemoveDuplicates(filePath)
+		util.RemoveCustomType(filePath)
 	}
 
 	return nil
