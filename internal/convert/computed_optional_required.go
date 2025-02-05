@@ -47,8 +47,7 @@ func (c ComputedOptionalRequired) Schema() []byte {
 	var b bytes.Buffer
 
 	if c.IsRequired() {
-		b.WriteString("Computed: true,\n")
-		b.WriteString("Optional: true,\n")
+		b.WriteString("Required: true,\n")
 	}
 
 	if c.IsOptional() {
