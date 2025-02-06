@@ -1,8 +1,11 @@
 {{ define "Initial_DataSource" }}
-// Template for generating Terraform provider Initial code for Data Source
-// Needed data is as follows.
-// DataSourceName string
-// ProviderName string
+/* =================================================================================
+ * Initial Template
+ * Required data are as follows
+ *
+		ProviderName   string
+		DataSourceName string
+ * ================================================================================= */
 
 var (
 	_ datasource.DataSource              = &{{.DataSourceName | ToCamelCase}}DataSource{}

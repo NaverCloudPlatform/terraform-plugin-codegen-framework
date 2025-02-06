@@ -1,8 +1,11 @@
 {{ define "Read_DataSource" }}
-// Template for generating Terraform provider Read operation code for Data Source
-// Required data is as follows.
-// DataSourceName string
-// RefreshObjectName string
+/* =================================================================================
+ * Read Template
+ * Required data are as follows
+ *
+		DataSourceName    string
+		RefreshObjectName string
+ * ================================================================================= */
 
 func (a *{{.DataSourceName | ToCamelCase}}DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var plan {{.RefreshObjectName | ToPascalCase}}Model

@@ -1,13 +1,19 @@
 {{ define "Refresh_DataSource" }}
-// Template for generating Terraform provider Refresh operation code
-// Needed data is as follows.
-// RefreshObjectName string
-// PackageName string
-// RefreshLogic string
-// ReadMethodName string
-// ReadReqBody string
-// Endpoint string
-// ReadPathParams string, optional
+/* =================================================================================
+ * Refresh Template
+ * Required data are as follows
+ *
+		PackageName          string
+		ResourceName         string
+		RefreshObjectName    string
+		RefreshLogic         string
+		ReadMethodName       string
+		ReadReqBody          string
+		Endpoint             string
+		ReadPathParams       string
+		ReadOpOptionalParams string
+		IdGetter             string
+ * ================================================================================= */
 
 package {{.PackageName}}
 

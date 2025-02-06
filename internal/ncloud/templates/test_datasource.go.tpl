@@ -3,10 +3,10 @@
  * Test Template
  * Required data are as follows
  *
-		ProviderName               string
-		DataSourceName               string
-		PackageName                string
-        ConfigParams               string
+		ProviderName   string
+		DataSourceName string
+		PackageName    string
+		ConfigParams   string
  * ================================================================================= */
 
 package {{.PackageName}}_test
