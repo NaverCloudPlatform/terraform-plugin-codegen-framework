@@ -239,55 +239,63 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestInf
 	var readOpOptionalParams strings.Builder
 	var readReqBody strings.Builder
 
-	for _, val := range t.Read.Parameters.Required {
-		if _, err := readReqBody.WriteString(fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"); err != nil {
-			return err
+	if t.Read != nil {
+		return fmt.Errorf("read operation is not defined for the data source")
+	}
+
+	if t.Read.Parameters.Required != nil {
+		for _, val := range t.Read.Parameters.Required {
+			if _, err := readReqBody.WriteString(fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"); err != nil {
+				return err
+			}
 		}
 	}
 
-	for _, val := range t.Read.Parameters.Optional {
+	if t.Read.Parameters.Optional != nil {
+		for _, val := range t.Read.Parameters.Optional {
 
-		switch val.Type {
+			switch val.Type {
 
-		case "string":
-			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
-			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
-			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
-				return err
-			}
+			case "string":
+				if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+					return err
+				}
 
-		case "integer":
-			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
-			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
-			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
-				return err
-			}
+			case "integer":
+				if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+					return err
+				}
 
-		case "boolean":
-			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
-			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
-			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
-				return err
-			}
+			case "boolean":
+				if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+					return err
+				}
 
-		case "array":
-			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
-			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
-			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
-				return err
-			}
+			case "array":
+				if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+					return err
+				}
 
-		// Array and Object are treated as string with serialization
-		default:
-			if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
-			if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-				reqParams.%[1]s = plan.%[1]s.ValueString()
-			}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
-				return err
+			// Array and Object are treated as string with serialization
+			default:
+				if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+					reqParams.%[1]s = plan.%[1]s.ValueString()
+				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+					return err
+				}
 			}
 		}
 	}
