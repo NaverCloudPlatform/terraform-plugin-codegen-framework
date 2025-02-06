@@ -34,7 +34,7 @@ func TestAccDataSourceNcloud{{.ProviderName | ToPascalCase}}_{{.DataSourceName |
 			{
 				Config: testAcc{{.DataSourceName | ToLowerCase}}Config({{.DataSourceName | ToCamelCase}}Name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "{{.DataSourceName | ToCamelCase}}_name", {{.DataSourceName | ToCamelCase}}Name),
+					resource.TestCheckResourceAttr(datasourceName, "{{.DataSourceName | ToCamelCase}}_name", {{.DataSourceName | ToCamelCase}}Name),
                     // check all the other attributes
 				),
 			},
