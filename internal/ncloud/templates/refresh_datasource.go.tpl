@@ -40,6 +40,8 @@ func (plan *{{.RefreshObjectName | ToPascalCase}}Model) refreshFromOutput(diagno
 		 return
 	}
 
+	id := {{.IdGetter}}
+
 	var postPlan {{.RefreshObjectName | ToPascalCase}}Model
 
 	// Fill required attributes

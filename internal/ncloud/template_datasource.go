@@ -141,6 +141,7 @@ func (d *DataSourceTemplate) RenderRefresh() []byte {
 		Endpoint             string
 		ReadPathParams       string
 		ReadOpOptionalParams string
+		IdGetter             string
 	}{
 		PackageName:          d.packageName,
 		ResourceName:         d.dataSourceName,
@@ -151,6 +152,7 @@ func (d *DataSourceTemplate) RenderRefresh() []byte {
 		Endpoint:             d.endpoint,
 		ReadPathParams:       d.readPathParams,
 		ReadOpOptionalParams: d.readOpOptionalParams,
+		IdGetter:             d.idGetter,
 	}
 
 	err = refreshTemplate.ExecuteTemplate(&b, "Refresh_DataSource", data)
