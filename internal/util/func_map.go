@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"strings"
 	"text/template"
+	"unicode"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -43,6 +44,21 @@ func ToLowerCase(s string) string {
 	}
 
 	return strings.Join(words, "")
+}
+
+func ToSnakeCase(s string) string {
+	var result []rune
+	for i, r := range s {
+		if unicode.IsUpper(r) {
+			if i > 0 {
+				result = append(result, '_')
+			}
+			result = append(result, unicode.ToLower(r))
+		} else {
+			result = append(result, r)
+		}
+	}
+	return string(result)
 }
 
 func PathToPascal(s string) string {
@@ -93,6 +109,7 @@ func CreateFuncMap() template.FuncMap {
 		"ToCamelCase":              ToCamelCase,
 		"ToPascalCase":             ToPascalCase,
 		"ToLowerCase":              ToLowerCase,
+		"ToSnakeCase":              ToSnakeCase,
 		"PathToPascal":             PathToPascal,
 		"FirstAlphabet":            FirstAlphabet,
 		"FirstAlphabetToUpperCase": FirstAlphabetToUpperCase,
