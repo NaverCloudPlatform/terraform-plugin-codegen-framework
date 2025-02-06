@@ -245,8 +245,37 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestInf
 
 	if t.Read.Parameters.Required != nil {
 		for _, val := range t.Read.Parameters.Required {
-			if _, err := readReqBody.WriteString(fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"); err != nil {
-				return err
+
+			switch val.Type {
+			case "string":
+				if _, err := readReqBody.WriteString(fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"); err != nil {
+					return err
+				}
+
+			case "integer":
+				if val.Format != "" {
+					switch val.Format {
+					case "int64":
+						if _, err := readReqBody.WriteString(fmt.Sprintf(`%[1]s: plan.%[2]s.ValueInt64(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"); err != nil {
+							return err
+						}
+
+					case "int32":
+						if _, err := readReqBody.WriteString(fmt.Sprintf(`%[1]s: plan.%[2]s.ValueInt32(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"); err != nil {
+							return err
+						}
+					}
+				}
+
+			case "number":
+				if _, err := readReqBody.WriteString(fmt.Sprintf(`%[1]s: plan.%[2]s.ValueFloat64(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"); err != nil {
+					return err
+				}
+
+			case "boolean":
+				if _, err := readReqBody.WriteString(fmt.Sprintf(`%[1]s: plan.%[2]s.ValueBool(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -265,9 +294,30 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestInf
 				}
 
 			case "integer":
+				if val.Format != "" {
+					switch val.Format {
+					case "int64":
+						if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+						if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+							reqParams.%[1]s = plan.%[1]s.ValueInt64()
+						}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+							return err
+						}
+
+					case "int32":
+						if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
+						if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
+							reqParams.%[1]s = plan.%[1]s.ValueInt32()
+						}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
+							return err
+						}
+					}
+				}
+
+			case "number":
 				if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
 				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-					reqParams.%[1]s = plan.%[1]s.ValueString()
+					reqParams.%[1]s = plan.%[1]s.ValueFloat64()
 				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
 					return err
 				}
@@ -275,7 +325,7 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestInf
 			case "boolean":
 				if _, err := readOpOptionalParams.WriteString(fmt.Sprintf(`
 				if !plan.%[1]s.IsNull() && !plan.%[1]s.IsUnknown() {
-					reqParams.%[1]s = plan.%[1]s.ValueString()
+					reqParams.%[1]s = plan.%[1]s.ValueBool()
 				}`, util.FirstAlphabetToUpperCase(val.Name)) + "\n"); err != nil {
 					return err
 				}
@@ -330,16 +380,13 @@ func makeDataSourceIndividualValues(d *DataSourceTemplate, spec *util.NcloudSpec
 	return nil
 }
 
+// Data source test file only requires
 func MakeDataSourceTestTFConfig(readParams *util.RequestParameters) string {
 	var t strings.Builder
 
-	for _, val := range readParams.Required {
-		t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val.Name), "tf-"+acctest.RandString(5)) + "\n")
-	}
-
-	if readParams.Optional != nil {
-		for _, val := range readParams.Optional {
-			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name)), "tf-"+acctest.RandString(5)) + "\n")
+	if readParams != nil {
+		for _, val := range readParams.Required {
+			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val.Name), "tf-"+acctest.RandString(5)) + "\n")
 		}
 	}
 
