@@ -239,7 +239,7 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestInf
 	var readOpOptionalParams strings.Builder
 	var readReqBody strings.Builder
 
-	if t.Read != nil {
+	if t.Read == nil {
 		return fmt.Errorf("read operation is not defined for the data source")
 	}
 
