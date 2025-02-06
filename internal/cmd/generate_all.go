@@ -130,10 +130,5 @@ func (cmd *GenerateAllCommand) runInternal(ctx context.Context, logger *slog.Log
 		return fmt.Errorf("error generating resource code: %w", err)
 	}
 
-	err = generateProviderCode(ctx, spec, cmd.flagOutputPath, cmd.flagPackageName, "Provider", logger)
-	if err != nil {
-		return fmt.Errorf("error generating provider code: %w", err)
-	}
-
 	return nil
 }

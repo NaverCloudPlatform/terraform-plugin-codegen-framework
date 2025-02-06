@@ -17,7 +17,6 @@ import (
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/input"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/ncloud"
 	ncloud_datasource "github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/ncloud/datasource"
-	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/output"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/schema"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/validate"
@@ -163,7 +162,7 @@ func generateDataSourceCode(ctx context.Context, spec util.NcloudSpecification, 
 		return fmt.Errorf("error writing Go code to output: %w", err)
 	}
 
-	err = output.WriteDataSourceTests(formattedSchemas, spec, outputPath, packageName)
+	err = ncloud.WriteNcloudDataSourceTests(formattedSchemas, spec, outputPath, packageName)
 	if err != nil {
 		return fmt.Errorf("error writing Go code to output: %w", err)
 	}
