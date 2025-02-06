@@ -19,7 +19,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	. "github.com/terraform-providers/terraform-provider-ncloud/internal/acctest"
+	. "github.com/NaverCloudPlatform/terraform-codegen-poc/internal/test"
 )
 
 func TestAccDataSourceNcloud{{.ProviderName | ToPascalCase}}_{{.DataSourceName | ToLowerCase}}_basic(t *testing.T) {
@@ -28,8 +28,8 @@ func TestAccDataSourceNcloud{{.ProviderName | ToPascalCase}}_{{.DataSourceName |
 	datasourceName := "ncloud_{{.ProviderName | ToLowerCase}}_{{.DataSourceName | ToLowerCase}}.testing_{{.DataSourceName | ToLowerCase}}"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		PreCheck:                 func() { test.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: test.ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAcc{{.DataSourceName | ToLowerCase}}Config({{.DataSourceName | ToCamelCase}}Name),
