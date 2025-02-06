@@ -617,7 +617,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 			}
 
-			if targetResourceRequest.Create.Parameters != nil {
+			if targetResourceRequest.Create != nil {
 				t.configParams = MakeTestTFConfig(targetResourceRequest.Create)
 			}
 
@@ -1192,13 +1192,13 @@ func MakeTestTFConfig(c *util.NcloudCommonRequestType) string {
 
 	if c.RequestBody != nil {
 		for _, val := range c.RequestBody.Required {
-			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name)), "tf-"+acctest.RandString(5)) + "\n")
+			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val.Name), "tf-"+acctest.RandString(5)) + "\n")
 		}
 	}
 
 	if c.Parameters != nil {
 		for _, val := range c.Parameters.Required {
-			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name)), "tf-"+acctest.RandString(5)) + "\n")
+			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val.Name), "tf-"+acctest.RandString(5)) + "\n")
 		}
 	}
 

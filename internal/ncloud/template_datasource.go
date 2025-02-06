@@ -230,7 +230,9 @@ func NewDataSources(spec *util.NcloudSpecification, datasourceName, packageName 
 		log.Fatalf("error occurred with MakeDataSourceReadOperationLogics: %v", err)
 	}
 
-	d.configParams = MakeDataSourceTestTFConfig(targetResourceRequest.Read.Parameters)
+	if targetResourceRequest.Read.Parameters != nil {
+		d.configParams = MakeDataSourceTestTFConfig(targetResourceRequest.Read.Parameters)
+	}
 	b = d
 	return b
 }
