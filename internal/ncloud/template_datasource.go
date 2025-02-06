@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/datasource"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/datasource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 )
 
@@ -202,7 +202,7 @@ func (d *DataSourceTemplate) RenderWait() []byte {
 
 func NewDataSources(spec *util.NcloudSpecification, datasourceName, packageName string) BaseTemplate {
 	var b BaseTemplate
-	var targetResourceRequest util.RequestWithRefreshObjectName
+	var targetResourceRequest util.RequestInfo
 
 	d := &DataSourceTemplate{
 		spec:           *spec,
@@ -233,7 +233,7 @@ func NewDataSources(spec *util.NcloudSpecification, datasourceName, packageName 
 	return b
 }
 
-func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestWithRefreshObjectName) error {
+func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestInfo) error {
 	var readOpOptionalParams strings.Builder
 	var readReqBody strings.Builder
 
@@ -320,7 +320,7 @@ func makeDataSourceIndividualValues(d *DataSourceTemplate, spec *util.NcloudSpec
 	return nil
 }
 
-func MakeDataSourceTestTFConfig(readParams *util.ParameterWithOptional) string {
+func MakeDataSourceTestTFConfig(readParams *util.RequestParameters) string {
 	var t strings.Builder
 
 	for _, val := range readParams.Required {

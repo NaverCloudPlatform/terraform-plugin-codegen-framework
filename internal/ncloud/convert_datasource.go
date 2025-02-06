@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/NaverCloudPlatform/terraform-plugin-codegen-framework/internal/util"
-	"github.com/hashicorp/terraform-plugin-codegen-spec/datasource"
+	"github.com/NaverCloudPlatform/terraform-plugin-codegen-spec/datasource"
 )
 
 // generate converter that convert openapi.json schema to terraform type
