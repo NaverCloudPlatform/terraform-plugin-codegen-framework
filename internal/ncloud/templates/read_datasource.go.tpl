@@ -12,7 +12,7 @@ func (a *{{.DataSourceName | ToCamelCase}}DataSource) Read(ctx context.Context, 
 		return
 	}
 
-	plan.refreshFromOutput(&resp.Diagnostics, plan.ID.ValueString())
+	plan.refreshFromOutput(ctx, &resp.Diagnostics)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 	if resp.Diagnostics.HasError() {
