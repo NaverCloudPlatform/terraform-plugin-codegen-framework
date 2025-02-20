@@ -46,7 +46,7 @@ func TestAccResourceNcloud{{.ProviderName | ToPascalCase}}_{{.ResourceName | ToL
 				Config: testAcc{{.ResourceName | ToLowerCase}}Config({{.ResourceName | ToCamelCase}}Name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheck{{.ResourceName | ToLowerCase}}Exists(resourceName, test.GetTestProvider(true)),
-					resource.TestCheckResourceAttr(resourceName, "{{.ResourceName | ToCamelCase}}_name", {{.ResourceName | ToCamelCase}}Name),
+					resource.TestCheckResourceAttr(resourceName, "{{.ResourceName | ToSnakeCase}}_name", {{.ResourceName | ToCamelCase}}Name),
                     // check all the other attributes
 				),
 			},

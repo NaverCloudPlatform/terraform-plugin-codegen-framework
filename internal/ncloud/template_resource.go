@@ -449,7 +449,6 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 	var readReqBodyForCheckExist string
 	var readReqBodyForCheckDestroy string
 	var deleteReqBody string
-
 	var readOpOptionalParams string
 	var importStateOverride string
 	var targetResourceRequest util.RequestInfo
@@ -476,7 +475,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 		}
 	}
 
-	refreshLogic, model, err := Gen_ConvertOAStoTFTypes(attributes)
+	refreshLogic, model, err := Gen_ConvertOAStoTFTypes_Resource(attributes)
 	if err != nil {
 		log.Fatalf("error occurred with Gen_ConvertOAStoTFTypes: %v", err)
 	}
@@ -618,8 +617,8 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 			}
 
-			if targetResourceRequest.Create.Parameters != nil {
-				t.configParams = MakeTestTFConfig(targetResourceRequest.Create.RequestBody.Required, targetResourceRequest.Create.Parameters)
+			if targetResourceRequest.Create != nil {
+				t.configParams = MakeTestTFConfig(targetResourceRequest.Create)
 			}
 
 			t.createPathParams = extractPathParams(targetResourceRequest.Create.Path)
@@ -1078,7 +1077,7 @@ func makeIdGetter(target string) string {
 
 	for idx, val := range parts {
 		if idx == len(parts)-1 {
-			s = s + fmt.Sprintf(`["%s"].(string)`, util.ToPascalCase(util.ToCamelCase(val)))
+			s = s + fmt.Sprintf(`["%s"].(string)`, util.ToCamelCase(val))
 			continue
 		}
 
@@ -1188,16 +1187,18 @@ func MakeRefreshFromResponse(attr resource.Attributes, resourceName string) stri
 	return s.String()
 }
 
-func MakeTestTFConfig(requiredCreateParams []*util.RequestParametersInfo, createPathParams *util.RequestParameters) string {
+func MakeTestTFConfig(c *util.NcloudCommonRequestType) string {
 	var t strings.Builder
 
-	for _, val := range requiredCreateParams {
-		t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val.Name), "tf-"+acctest.RandString(5)) + "\n")
+	if c.RequestBody != nil {
+		for _, val := range c.RequestBody.Required {
+			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val.Name), "tf-"+acctest.RandString(5)) + "\n")
+		}
 	}
 
-	if createPathParams != nil {
-		for _, val := range createPathParams.Required {
-			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name)), "tf-"+acctest.RandString(5)) + "\n")
+	if c.Parameters != nil {
+		for _, val := range c.Parameters.Required {
+			t.WriteString(fmt.Sprintf(`		%[1]s = "%[2]s"`, PascalToSnakeCase(val.Name), "tf-"+acctest.RandString(5)) + "\n")
 		}
 	}
 
