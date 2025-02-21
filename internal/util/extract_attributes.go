@@ -32,12 +32,6 @@ type CrudParameters struct {
 	Delete *NcloudCommonRequestType   `json:"delete"`
 }
 
-type RequestInfo struct {
-	CrudParameters
-	Name string `json:"name"`
-	Id   string `json:"id"`
-}
-
 type RequestParameters struct {
 	Required []*RequestParametersInfo `json:"required,omitempty"`
 	Optional []*RequestParametersInfo `json:"optional,omitempty"`
@@ -63,23 +57,24 @@ type NcloudProvider struct {
 type NcloudSpecification struct {
 	spec.Specification
 	Provider    *NcloudProvider `json:"provider"`
-	Requests    []RequestInfo   `json:"requests"`
 	Resources   []Resource      `json:"resources"`
 	DataSources []DataSource    `json:"datasources"`
 }
 
 type Resource struct {
 	resource.Resource
-	RefreshObjectName   string `json:"refresh_object_name"`
-	ImportStateOverride string `json:"import_state_override"`
-	Id                  string `json:"id"`
+	CRUDParameters      CrudParameters `json:"crud_parameters"`
+	RefreshObjectName   string         `json:"refresh_object_name"`
+	ImportStateOverride string         `json:"import_state_override"`
+	Id                  string         `json:"id"`
 }
 
 type DataSource struct {
 	datasource.DataSource
-	RefreshObjectName   string `json:"refresh_object_name"`
-	ImportStateOverride string `json:"import_state_override"`
-	Id                  string `json:"id"`
+	CRUDParameters      CrudParameters `json:"crud_parameters"`
+	RefreshObjectName   string         `json:"refresh_object_name"`
+	ImportStateOverride string         `json:"import_state_override"`
+	Id                  string         `json:"id"`
 }
 
 type Schema struct {

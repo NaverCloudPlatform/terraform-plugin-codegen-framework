@@ -204,7 +204,7 @@ func (d *DataSourceTemplate) RenderWait() []byte {
 
 func NewDataSources(spec *util.NcloudSpecification, datasourceName, packageName string) BaseTemplate {
 	var b BaseTemplate
-	var targetResourceRequest util.RequestInfo
+	var targetDataSourceRequest *util.DataSource
 
 	d := &DataSourceTemplate{
 		spec:           *spec,
@@ -216,9 +216,9 @@ func NewDataSources(spec *util.NcloudSpecification, datasourceName, packageName 
 
 	d.funcMap = util.CreateFuncMap()
 
-	for _, val := range spec.Requests {
+	for _, val := range spec.DataSources {
 		if val.Name == datasourceName {
-			targetResourceRequest = val
+			targetDataSourceRequest = &val
 		}
 	}
 
@@ -226,27 +226,27 @@ func NewDataSources(spec *util.NcloudSpecification, datasourceName, packageName 
 		log.Fatalf("error occurred with MakeDataSourceIndividualValues: %v", err)
 	}
 
-	if err := makeDataSourceReadOperationLogics(d, &targetResourceRequest); err != nil {
+	if err := makeDataSourceReadOperationLogics(d, targetDataSourceRequest); err != nil {
 		log.Fatalf("error occurred with MakeDataSourceReadOperationLogics: %v", err)
 	}
 
-	if targetResourceRequest.Read.Parameters != nil {
-		d.configParams = MakeDataSourceTestTFConfig(targetResourceRequest.Read.Parameters)
+	if targetDataSourceRequest.CRUDParameters.Read.Parameters != nil {
+		d.configParams = MakeDataSourceTestTFConfig(targetDataSourceRequest.CRUDParameters.Read.Parameters)
 	}
 	b = d
 	return b
 }
 
-func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestInfo) error {
+func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.DataSource) error {
 	var readOpOptionalParams strings.Builder
 	var readReqBody strings.Builder
 
-	if t.Read == nil {
+	if t.CRUDParameters.Read == nil {
 		return fmt.Errorf("read operation is not defined for the data source")
 	}
 
-	if t.Read.Parameters.Required != nil {
-		for _, val := range t.Read.Parameters.Required {
+	if t.CRUDParameters.Read.Parameters.Required != nil {
+		for _, val := range t.CRUDParameters.Read.Parameters.Required {
 
 			switch val.Type {
 			case "string":
@@ -282,8 +282,8 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestInf
 		}
 	}
 
-	if t.Read.Parameters.Optional != nil {
-		for _, val := range t.Read.Parameters.Optional {
+	if t.CRUDParameters.Read.Parameters.Optional != nil {
+		for _, val := range t.CRUDParameters.Read.Parameters.Optional {
 
 			switch val.Type {
 
@@ -354,9 +354,9 @@ func makeDataSourceReadOperationLogics(d *DataSourceTemplate, t *util.RequestInf
 
 	d.readOpOptionalParams = readOpOptionalParams.String()
 	d.readReqBody = readReqBody.String()
-	d.readPathParams = extractReadPathParams(t.Read.Path)
-	d.readMethod = t.Read.Method
-	d.readMethodName = strings.ToUpper(t.Read.Method) + getMethodName(t.Read.Path)
+	d.readPathParams = extractReadPathParams(t.CRUDParameters.Read.Path)
+	d.readMethod = t.CRUDParameters.Read.Method
+	d.readMethodName = strings.ToUpper(t.CRUDParameters.Read.Method) + getMethodName(t.CRUDParameters.Read.Path)
 
 	return nil
 }

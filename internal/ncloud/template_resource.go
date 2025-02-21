@@ -451,7 +451,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 	var deleteReqBody string
 	var readOpOptionalParams string
 	var importStateOverride string
-	var targetResourceRequest util.RequestInfo
+	var targetResourceRequest *util.Resource
 
 	t := &Template{
 		spec:         spec,
@@ -469,9 +469,9 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 		}
 	}
 
-	for _, val := range spec.Requests {
+	for _, val := range spec.Resources {
 		if val.Name == resourceName {
-			targetResourceRequest = val
+			targetResourceRequest = &val
 		}
 	}
 
@@ -481,12 +481,12 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 	}
 
 	// Address Request > Create
-	if targetResourceRequest.Create != nil {
+	if targetResourceRequest.CRUDParameters.Create != nil {
 		// Address Request > Create > RequestBody
-		if targetResourceRequest.Create.RequestBody != nil {
+		if targetResourceRequest.CRUDParameters.Create.RequestBody != nil {
 
-			if targetResourceRequest.Create.RequestBody.Required != nil {
-				for _, val := range targetResourceRequest.Create.RequestBody.Required {
+			if targetResourceRequest.CRUDParameters.Create.RequestBody.Required != nil {
+				for _, val := range targetResourceRequest.CRUDParameters.Create.RequestBody.Required {
 
 					switch val.Type {
 					case "string":
@@ -539,8 +539,8 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 			}
 
-			if targetResourceRequest.Create.RequestBody.Optional != nil {
-				for _, val := range targetResourceRequest.Create.RequestBody.Optional {
+			if targetResourceRequest.CRUDParameters.Create.RequestBody.Optional != nil {
+				for _, val := range targetResourceRequest.CRUDParameters.Create.RequestBody.Optional {
 
 					switch val.Type {
 					case "string":
@@ -617,19 +617,19 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 			}
 
-			if targetResourceRequest.Create != nil {
-				t.configParams = MakeTestTFConfig(targetResourceRequest.Create)
+			if targetResourceRequest.CRUDParameters.Create != nil {
+				t.configParams = MakeTestTFConfig(targetResourceRequest.CRUDParameters.Create)
 			}
 
-			t.createPathParams = extractPathParams(targetResourceRequest.Create.Path)
-			t.createMethod = targetResourceRequest.Create.Method
-			t.createMethodName = strings.ToUpper(targetResourceRequest.Create.Method) + getMethodName(targetResourceRequest.Create.Path)
+			t.createPathParams = extractPathParams(targetResourceRequest.CRUDParameters.Create.Path)
+			t.createMethod = targetResourceRequest.CRUDParameters.Create.Method
+			t.createMethodName = strings.ToUpper(targetResourceRequest.CRUDParameters.Create.Method) + getMethodName(targetResourceRequest.CRUDParameters.Create.Path)
 		}
 
-		if targetResourceRequest.Create.Parameters != nil {
+		if targetResourceRequest.CRUDParameters.Create.Parameters != nil {
 
-			if targetResourceRequest.Create.Parameters.Required != nil {
-				for _, val := range targetResourceRequest.Create.Parameters.Required {
+			if targetResourceRequest.CRUDParameters.Create.Parameters.Required != nil {
+				for _, val := range targetResourceRequest.CRUDParameters.Create.Parameters.Required {
 					switch val.Type {
 					case "string":
 						createReqBody = createReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
@@ -654,7 +654,7 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 			}
 
-			if targetResourceRequest.Create.Parameters.Optional != nil {
+			if targetResourceRequest.CRUDParameters.Create.Parameters.Optional != nil {
 				// NOTE - CREATE does not have optional parameters
 				panic("CREATE does not have optional Parameters in the previous cases. Please notify the developer to implement.")
 			}
@@ -666,11 +666,11 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 	}
 
 	// Address Request > Read
-	if targetResourceRequest.Read != nil {
+	if targetResourceRequest.CRUDParameters.Read != nil {
 		// Address Request > Read > Parameters (READ does not have RequestBody)
-		if targetResourceRequest.Read.Parameters != nil {
+		if targetResourceRequest.CRUDParameters.Read.Parameters != nil {
 
-			for _, val := range targetResourceRequest.Read.Parameters.Required {
+			for _, val := range targetResourceRequest.CRUDParameters.Read.Parameters.Required {
 
 				switch val.Type {
 				case "string":
@@ -698,8 +698,8 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				readReqBodyForCheckDestroy = readReqBodyForCheckDestroy + fmt.Sprintf(`		%[1]s: rs.Primary.Attributes["%[2]s"],`, util.PathToPascal(val.Name), util.FirstAlphabetToLowerCase(util.PathToPascal(val.Name))) + "\n"
 			}
 
-			if targetResourceRequest.Read.Parameters.Optional != nil {
-				for _, val := range targetResourceRequest.Read.Parameters.Optional {
+			if targetResourceRequest.CRUDParameters.Read.Parameters.Optional != nil {
+				for _, val := range targetResourceRequest.CRUDParameters.Read.Parameters.Optional {
 
 					switch val.Type {
 					case "string":
@@ -754,19 +754,19 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 			}
 		}
 
-		t.readPathParams = extractReadPathParams(targetResourceRequest.Read.Path)
-		t.readMethod = targetResourceRequest.Read.Method
-		t.readMethodName = strings.ToUpper(targetResourceRequest.Read.Method) + getMethodName(targetResourceRequest.Read.Path)
+		t.readPathParams = extractReadPathParams(targetResourceRequest.CRUDParameters.Read.Path)
+		t.readMethod = targetResourceRequest.CRUDParameters.Read.Method
+		t.readMethodName = strings.ToUpper(targetResourceRequest.CRUDParameters.Read.Method) + getMethodName(targetResourceRequest.CRUDParameters.Read.Path)
 	}
 
 	// Address Request > Update
-	if len(targetResourceRequest.Update) > 0 {
+	if len(targetResourceRequest.CRUDParameters.Update) > 0 {
 
 		// Address Request > Update > Parameters
-		if targetResourceRequest.Update[0].Parameters != nil {
+		if targetResourceRequest.CRUDParameters.Update[0].Parameters != nil {
 
-			if targetResourceRequest.Update[0].Parameters.Required != nil {
-				for _, val := range targetResourceRequest.Update[0].Parameters.Required {
+			if targetResourceRequest.CRUDParameters.Update[0].Parameters.Required != nil {
+				for _, val := range targetResourceRequest.CRUDParameters.Update[0].Parameters.Required {
 					switch val.Type {
 					case "string":
 						updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
@@ -819,17 +819,17 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 			}
 
-			if targetResourceRequest.Update[0].Parameters.Optional != nil {
+			if targetResourceRequest.CRUDParameters.Update[0].Parameters.Optional != nil {
 				// NOTE - UPDATE does not have optional parameters
 				panic("UPDATE does not have optional Parameters in the previous cases. Please notify the developer to implement.")
 			}
 
 		}
 
-		if targetResourceRequest.Update[0].RequestBody != nil {
+		if targetResourceRequest.CRUDParameters.Update[0].RequestBody != nil {
 
-			if targetResourceRequest.Update[0].RequestBody.Required != nil {
-				for _, val := range targetResourceRequest.Update[0].RequestBody.Required {
+			if targetResourceRequest.CRUDParameters.Update[0].RequestBody.Required != nil {
+				for _, val := range targetResourceRequest.CRUDParameters.Update[0].RequestBody.Required {
 					switch val.Type {
 					case "string":
 						updateReqBody = updateReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.FirstAlphabetToUpperCase(val.Name), util.FirstAlphabetToUpperCase(val.Name)) + "\n"
@@ -854,8 +854,8 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 			}
 
-			if targetResourceRequest.Update[0].RequestBody.Optional != nil {
-				for _, val := range targetResourceRequest.Update[0].RequestBody.Optional {
+			if targetResourceRequest.CRUDParameters.Update[0].RequestBody.Optional != nil {
+				for _, val := range targetResourceRequest.CRUDParameters.Update[0].RequestBody.Optional {
 
 					switch val.Type {
 					case "string":
@@ -914,19 +914,19 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 		t.updateReqListParams = updateReqListParams
 		t.updateReqObjectParams = updateReqObjectParams
 		t.isUpdateExists = true
-		t.updatePathParams = extractPathParams(targetResourceRequest.Update[0].Path)
-		t.updateMethod = targetResourceRequest.Update[0].Method
+		t.updatePathParams = extractPathParams(targetResourceRequest.CRUDParameters.Update[0].Path)
+		t.updateMethod = targetResourceRequest.CRUDParameters.Update[0].Method
 		t.updateReqBody = updateReqBody
 		t.updateOpOptionalParams = updateOpOptionalParams
-		t.updateMethodName = strings.ToUpper(targetResourceRequest.Update[0].Method) + getMethodName(targetResourceRequest.Update[0].Path)
+		t.updateMethodName = strings.ToUpper(targetResourceRequest.CRUDParameters.Update[0].Method) + getMethodName(targetResourceRequest.CRUDParameters.Update[0].Path)
 	}
 
 	// Address Request > Delete
-	if targetResourceRequest.Delete != nil {
-		if targetResourceRequest.Delete.Parameters != nil {
+	if targetResourceRequest.CRUDParameters.Delete != nil {
+		if targetResourceRequest.CRUDParameters.Delete.Parameters != nil {
 
-			if targetResourceRequest.Delete.Parameters.Required != nil {
-				for _, val := range targetResourceRequest.Delete.Parameters.Required {
+			if targetResourceRequest.CRUDParameters.Delete.Parameters.Required != nil {
+				for _, val := range targetResourceRequest.CRUDParameters.Delete.Parameters.Required {
 					switch val.Type {
 					case "string":
 						deleteReqBody = deleteReqBody + fmt.Sprintf(`%[1]s: plan.%[2]s.ValueString(),`, util.PathToPascal(val.Name), util.PathToPascal(val.Name)) + "\n"
@@ -951,21 +951,21 @@ func NewResource(spec util.NcloudSpecification, resourceName, packageName string
 				}
 			}
 
-			if targetResourceRequest.Delete.Parameters.Optional != nil {
+			if targetResourceRequest.CRUDParameters.Delete.Parameters.Optional != nil {
 				// NOTE - DELETE does not have optional parameters
 				panic("DELETE does not have optional Parameters in the previous cases. Please notify the developer to implement.")
 			}
 
 		}
 
-		if targetResourceRequest.Delete.RequestBody != nil {
+		if targetResourceRequest.CRUDParameters.Delete.RequestBody != nil {
 			// NOTE - DELETE does not have RequestBody
 			panic("DELETE does not have RequestBody in the previous cases. Please notify the developer to implement.")
 		}
 
-		t.deletePathParams = extractPathParams(targetResourceRequest.Delete.Path)
-		t.deleteMethod = targetResourceRequest.Delete.Method
-		t.deleteMethodName = strings.ToUpper(targetResourceRequest.Delete.Method) + getMethodName(targetResourceRequest.Delete.Path)
+		t.deletePathParams = extractPathParams(targetResourceRequest.CRUDParameters.Delete.Path)
+		t.deleteMethod = targetResourceRequest.CRUDParameters.Delete.Method
+		t.deleteMethodName = strings.ToUpper(targetResourceRequest.CRUDParameters.Delete.Method) + getMethodName(targetResourceRequest.CRUDParameters.Delete.Path)
 	}
 
 	t.funcMap = funcMap
